@@ -10,11 +10,11 @@ int main(int argc, char* argv[]) {
 namespace kit {
 
 TEST(testUtil, caseCpuUsage) {
-    while (true) {
-        sleep(1);
-        std::cout << CPUUsage() << std::endl;
-    }
     std::cout << CPUUsage() << std::endl;
+}
+
+TEST(testUtil, caseZone) {
+    std::cout << Zone() << std::endl;
 }
 
 }  // namespace kit

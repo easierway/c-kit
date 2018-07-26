@@ -87,6 +87,7 @@ include_directories(
     "${C_KIT_SOURCE_DIR}/include"
     "${C_KIT_SOURCE_DIR}/third/gtest/build/include"
     "${C_KIT_SOURCE_DIR}/third/ppconsul/build/include"
+    "${C_KIT_SOURCE_DIR}/third/boost/build/include"
 )
 
 link_directories(
