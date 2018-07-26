@@ -94,7 +94,6 @@ link_directories(
 )
 
 if(APPLE)
-    message("apple")
     link_directories(
         "${C_KIT_SOURCE_DIR}/third/ppconsul/build/lib"
     )
@@ -108,6 +107,11 @@ aux_source_directory(src/balancer balancer_source)
 add_executable(test_balancer ${balancer_source} test/balancer/test_balancer.cpp)
 add_dependencies(test_balancer third)
 target_link_libraries(test_balancer gtest ppconsul)
+
+aux_source_directory(src/util util_source)
+add_executable(test_util ${util_source} test/util/test_util.cpp)
+add_dependencies(test_util third)
+target_link_libraries(test_util gtest)
 
 enable_testing()
 add_test(NAME test_balancer COMMAND test_balancer)

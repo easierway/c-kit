@@ -1,0 +1,5 @@
+
+namespace kit {
+
+double CPUUsage();
+}
