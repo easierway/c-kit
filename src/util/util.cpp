@@ -1,37 +1,36 @@
-
 #include "util/util.h"
-#include <stdio.h>
+#include <cstdint>
+#include <cstdio>
 
 namespace kit {
-static unsigned long long lastTotalUser, lastTotalUserLow, lastTotalSys, lastTotalIdle;
 
 double CPUUsage() {
-    double             percent;
-    FILE*              file;
-    unsigned long long totalUser, totalUserLow, totalSys, totalIdle, total;
+    static uint64_t lastUser, lastUserLow, lastSys, lastIdle;
 
-    file = fopen("/proc/stat", "r");
-    fscanf(file, "cpu %llu %llu %llu %llu", &totalUser, &totalUserLow,
-           &totalSys, &totalIdle);
-    fclose(file);
+    double   percent;
+    uint64_t user, userLow, sys, idle, total;
 
-    if (totalUser < lastTotalUser || totalUserLow < lastTotalUserLow ||
-        totalSys < lastTotalSys || totalIdle < lastTotalIdle) {
+    auto fp = fopen("/proc/stat", "r");
+    fscanf(fp, "cpu %llu %llu %llu %llu", &user, &userLow, &sys, &idle);
+    fclose(fp);
+
+    if (user < lastUser || userLow < lastUserLow ||
+        sys < lastSys || idle < lastIdle) {
         percent = -1.0;
     } else {
-        total = (totalUser - lastTotalUser) + (totalUserLow - lastTotalUserLow) +
-                (totalSys - lastTotalSys);
+        total   = (user - lastUser) + (userLow - lastUserLow) + (sys - lastSys);
         percent = total;
-        total += (totalIdle - lastTotalIdle);
+        total += (idle - lastIdle);
         percent /= total;
         percent *= 100;
     }
 
-    lastTotalUser = totalUser;
-    lastTotalUserLow = totalUserLow;
-    lastTotalSys = totalSys;
-    lastTotalIdle = totalIdle;
+    lastUser    = user;
+    lastUserLow = userLow;
+    lastSys     = sys;
+    lastIdle    = idle;
 
     return percent;
 }
+
 }  // namespace kit
