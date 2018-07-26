@@ -93,7 +93,8 @@ link_directories(
     "${C_KIT_SOURCE_DIR}/third/gtest/build/lib"
 )
 
-if(NOT APPLE)
+if(APPLE)
+    message("apple")
     link_directories(
         "${C_KIT_SOURCE_DIR}/third/ppconsul/build/lib"
     )
