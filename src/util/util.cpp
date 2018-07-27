@@ -68,7 +68,8 @@ std::string Zone() {
     }
 
     std::vector<std::string> kv;
-    boost::split(kv, output, boost::is_any_of(" "));
+    auto str = output.substr(0, output.length() - 1);
+    boost::split(kv, str, boost::is_any_of(" "));
     if (kv.size() != 2) {
         return "unknown";
     }

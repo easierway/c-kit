@@ -206,13 +206,13 @@ std::shared_ptr<ServiceNode> ConsulResolver::DiscoverNode() {
     if (factorMax > factorThreshold && factorThreshold > 0) {
         factorMax = factorThreshold;
     }
-    auto        factor      = rand() % factorMax;
-    const auto& serviceZone = localZone;
+    auto serviceZone = localZone;
+    auto factor      = rand() % factorMax;
     if (factor >= localZone->factorMax) {
-        const auto& serviceZone = otherZone;
+        serviceZone = otherZone;
     }
-    const auto& factors = serviceZone->factors;
-    auto        idx     = std::lower_bound(factors.begin(), factors.end(), rand() % serviceZone->factorMax) - factors.begin();
+    auto& factors = serviceZone->factors;
+    auto  idx     = std::lower_bound(factors.begin(), factors.end(), rand() % serviceZone->factorMax) - factors.begin();
     return serviceZone->nodes[idx];
 }
 }
