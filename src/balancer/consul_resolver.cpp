@@ -97,7 +97,7 @@ std::tuple<int, std::string> ConsulResolver::_updateServiceZone() {
     }
     auto jsonObj = json11::Json::parse(body, err);
     if (!err.empty()) {
-        return std::make_tuple(-1, "JsonParse. err [" + err + "]");
+        return std::make_tuple(-1, "Json parse failed. err [" + err + "]");
     }
 
     auto localZone = std::make_shared<ServiceZone>();
@@ -154,7 +154,7 @@ std::tuple<int, std::string> ConsulResolver::_updateFactorThreshold() {
     }
     auto jsonObj = json11::Json::parse(body, err);
     if (!err.empty()) {
-        return std::make_tuple(-1, "JsonParse. err [" + err + "]");
+        return std::make_tuple(-1, "Json parse failed. err [" + err + "]");
     }
 
     int factorThreshold = 0;
@@ -178,7 +178,6 @@ std::tuple<int, std::string> ConsulResolver::_updateFactorThreshold() {
         }
     }
 
-    // TODO rwlock
     this->factorThreshold = factorThreshold;
     this->myServiceNum    = myServiceNum;
 
@@ -206,20 +205,16 @@ std::shared_ptr<ServiceNode> ConsulResolver::DiscoverNode() {
     }
     factorThreshold = factorThreshold * this->cpuPercentage / 100;
 
-    if (factorThreshold <= localZone->factorMax && localZone->factorMax > 0) {
-        const auto& factors = localZone->factors;
-        auto        idx     = std::lower_bound(factors.begin(), factors.end(), rand() % localZone->factorMax) - factors.begin();
-        return localZone->nodes[idx];
-    }
-
-    auto factorMax = otherZone->factorMax + localZone->factorMax;
-    if (factorMax > factorThreshold && factorThreshold > 0) {
-        factorMax = factorThreshold;
-    }
     auto serviceZone = localZone;
-    auto factor      = rand() % factorMax;
-    if (factor >= localZone->factorMax) {
-        serviceZone = otherZone;
+    if (factorThreshold > localZone->factorMax || localZone->factorMax <= 0) {
+        auto factorMax = otherZone->factorMax + localZone->factorMax;
+        if (factorMax > factorThreshold && factorThreshold > 0) {
+            factorMax = factorThreshold;
+        }
+        auto factor = rand() % factorMax;
+        if (factor >= localZone->factorMax) {
+            serviceZone = otherZone;
+        }
     }
     auto& factors = serviceZone->factors;
     auto  idx     = std::lower_bound(factors.begin(), factors.end(), rand() % serviceZone->factorMax) - factors.begin();
