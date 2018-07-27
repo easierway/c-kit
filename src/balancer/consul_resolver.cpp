@@ -127,9 +127,10 @@ std::tuple<int, std::string> ConsulResolver::_updateServiceZone() {
         }
     }
 
-    // TODO rwlock
+    this->serviceUpdaterMutex.lock();
     this->localZone = localZone;
     this->otherZone = otherZone;
+    this->serviceUpdaterMutex.unlock();
 
     std::cout << "update localZone [" << this->localZone->to_json().dump() << "]" << std::endl;
     std::cout << "update otherZone [" << this->otherZone->to_json().dump() << "]" << std::endl;
@@ -182,8 +183,10 @@ std::tuple<int, std::string> ConsulResolver::_updateFactorThreshold() {
 }
 
 std::shared_ptr<ServiceNode> ConsulResolver::DiscoverNode() {
+    this->serviceUpdaterMutex.lock_shared();
     auto localZone = this->localZone;
     auto otherZone = this->otherZone;
+    this->serviceUpdaterMutex.unlock_shared();
 
     if (localZone->factorMax + otherZone->factorMax == 0) {
         return std::shared_ptr<ServiceNode>(nullptr);

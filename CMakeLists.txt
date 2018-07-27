@@ -67,6 +67,7 @@ include_directories(
 
 link_directories(
     "${C_KIT_SOURCE_DIR}/third/gtest/build/lib"
+    "${C_KIT_SOURCE_DIR}/third/boost/build/lib"
     "${C_KIT_SOURCE_DIR}/third/curl/build/lib"
     "${C_KIT_SOURCE_DIR}/third/json11/build/lib"
 )
@@ -79,7 +80,7 @@ target_link_libraries(test_util gtest curl)
 aux_source_directory(src/balancer balancer_source)
 add_executable(test_balancer ${balancer_source} ${util_source} test/balancer/test_balancer.cpp)
 add_dependencies(test_balancer third)
-target_link_libraries(test_balancer gtest curl json11)
+target_link_libraries(test_balancer gtest curl json11 boost_system boost_thread)
 
 enable_testing()
 add_test(NAME test_balancer COMMAND test_balancer)

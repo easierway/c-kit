@@ -1,3 +1,4 @@
+#include <boost/thread/shared_mutex.hpp>
 #include <iostream>
 #include <json11.hpp>
 #include <sstream>
@@ -55,7 +56,7 @@ class ConsulResolver {
     bool                         done;
     int                          cpuPercentage;
     double                       ratio;
-    std::mutex                   serviceUpdaterMutex;
+    boost::shared_mutex          serviceUpdaterMutex;
 
     json11::Json to_json() const {
         return json11::Json::object{
