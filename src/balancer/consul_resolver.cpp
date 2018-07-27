@@ -57,7 +57,7 @@ std::tuple<int, std::string> ConsulResolver::Start() {
             std::this_thread::sleep_for(std::chrono::seconds(this->intervalS));
         }
     });
-    
+
     std::cout << "consul resolver start " << this->to_json().dump() << std::endl;
 
     return std::make_tuple(0, "");
@@ -130,7 +130,7 @@ std::tuple<int, std::string> ConsulResolver::_resolve() {
     // TODO rwlock
     this->localZone = localZone;
     this->otherZone = otherZone;
-    
+
     std::cout << "update localZone [" << this->localZone->to_json().dump() << "]" << std::endl;
     std::cout << "update otherZone [" << this->otherZone->to_json().dump() << "]" << std::endl;
 
@@ -182,37 +182,37 @@ std::tuple<int, std::string> ConsulResolver::_calFactorThreshold() {
 }
 
 std::shared_ptr<ServiceNode> ConsulResolver::DiscoverNode() {
-    if (this->localZone->factorMax + this->otherZone->factorMax == 0) {
+    auto localZone = this->localZone;
+    auto otherZone = this->otherZone;
+    if (localZone->factorMax + otherZone->factorMax == 0) {
         return std::shared_ptr<ServiceNode>(nullptr);
     }
 
     auto factorThreshold = this->factorThreshold;
     if (this->ratio != 0) {
-        auto m          = double((this->localZone->factorMax + this->otherZone->factorMax) * this->myServiceNum) * this->ratio;
-        auto n          = double(this->localZone->factors.size() + this->otherZone->factors.size());
+        auto m          = double((localZone->factorMax + otherZone->factorMax) * this->myServiceNum) * this->ratio;
+        auto n          = double(localZone->factors.size() + otherZone->factors.size());
         factorThreshold = int(m / n);
     }
     factorThreshold = factorThreshold * this->cpuPercentage / 100;
 
-    if (factorThreshold <= this->localZone->factorMax && this->localZone->factorMax > 0) {
-        const auto& factors = this->localZone->factors;
-        auto        idx     = std::lower_bound(factors.begin(), factors.end(), rand() % this->localZone->factorMax) - factors.begin();
+    if (factorThreshold <= localZone->factorMax && localZone->factorMax > 0) {
+        const auto& factors = localZone->factors;
+        auto        idx     = std::lower_bound(factors.begin(), factors.end(), rand() % localZone->factorMax) - factors.begin();
         return this->localZone->nodes[idx];
     }
 
-    auto factorMax = this->otherZone->factorMax + this->localZone->factorMax;
+    auto factorMax = otherZone->factorMax + localZone->factorMax;
     if (factorMax > factorThreshold && factorThreshold > 0) {
         factorMax = factorThreshold;
     }
-    auto factor = rand() % factorMax;
-    if (factor < this->localZone->factorMax) {
-        const auto& factors = this->localZone->factors;
-        auto        idx     = std::lower_bound(factors.begin(), factors.end(), rand() % this->localZone->factorMax) - factors.begin();
-        return this->localZone->nodes[idx];
+    auto        factor      = rand() % factorMax;
+    const auto& serviceZone = localZone;
+    if (factor >= localZone->factorMax) {
+        const auto& serviceZone = otherZone;
     }
-
-    const auto& factors = this->otherZone->factors;
-    auto        idx     = std::lower_bound(factors.begin(), factors.end(), rand() % this->otherZone->factorMax) - factors.begin();
-    return this->otherZone->nodes[idx];
+    const auto& factors = serviceZone->factors;
+    auto        idx     = std::lower_bound(factors.begin(), factors.end(), rand() % serviceZone->factorMax) - factors.begin();
+    return serviceZone->nodes[idx];
 }
 }
