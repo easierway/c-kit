@@ -25,7 +25,6 @@ struct ServiceZone {
 };
 
 class ConsulResolver {
-    //    std::shared_ptr<ppconsul::catalog::Catalog> client;
     std::string                  address;
     std::string                  service;
     uint64_t                     lastIndex;
