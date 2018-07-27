@@ -82,10 +82,11 @@ class ConsulResolver {
     std::tuple<int, std::string> _updateFactorThreshold();
 
    public:
-    ConsulResolver(const std::string& address,
-                   const std::string& service,
-                   const std::string& myService,
-                   int intervalS, double ratio);
+    ConsulResolver(
+        const std::string& address,
+        const std::string& service,
+        const std::string& myService,
+        int intervalS, double ratio);
 
     std::tuple<int, std::string> Start();
     std::tuple<int, std::string> Stop();

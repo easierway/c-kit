@@ -6,10 +6,11 @@
 
 namespace kit {
 
-ConsulResolver::ConsulResolver(const std::string& address,
-                               const std::string& service,
-                               const std::string& myService,
-                               int intervalS, double ratio) {
+ConsulResolver::ConsulResolver(
+    const std::string& address,
+    const std::string& service,
+    const std::string& myService,
+    int intervalS, double ratio) {
     this->address                = address;
     this->service                = service;
     this->myService              = myService;
