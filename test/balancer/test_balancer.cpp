@@ -44,23 +44,25 @@ TEST(testBalancer, caseConcurrency) {
         std::cout << code << err << std::endl;
     }
 
+    auto                                              threadNum = 100;
     std::vector<std::thread*>                         vt;
-    std::vector<std::unordered_map<std::string, int>> counters;
+    std::vector<std::unordered_map<std::string, int>> counters(threadNum);
     auto                                              now = std::chrono::steady_clock::now();
-    for (int i = 0; i < 100; i++) {
-        vt.emplace_back(new std::thread([&](int idx) {
-            while (true) {
-                if (std::chrono::steady_clock::now() - now > std::chrono::seconds(20)) {
-                    break;
+    for (int i = 0; i < threadNum; i++) {
+        vt.emplace_back(new std::thread(
+            [&](int idx) {
+                while (true) {
+                    if (std::chrono::steady_clock::now() - now > std::chrono::seconds(20)) {
+                        break;
+                    }
+                    auto address = balancer->DiscoverNode()->Address();
+                    if (counters[idx].count(address) <= 0) {
+                        counters[idx][address] = 0;
+                    }
+                    counters[idx][address]++;
                 }
-                auto address = balancer->DiscoverNode()->Address();
-                if (counters[idx].count(address) <= 0) {
-                    counters[idx][address] = 0;
-                }
-                counters[idx][address]++;
-            }
-        },
-                                        i));
+            },
+            i));
     }
     for (auto& t : vt) {
         if (t->joinable()) {
@@ -83,5 +85,4 @@ TEST(testBalancer, caseConcurrency) {
     }
     balancer->Stop();
 }
-
 }
