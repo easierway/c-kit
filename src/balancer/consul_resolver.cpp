@@ -1,4 +1,4 @@
-#include "balancer/consul_balancer.h"
+#include "balancer/consul_resolver.h"
 #include <algorithm>
 #include <chrono>
 #include <json11.hpp>

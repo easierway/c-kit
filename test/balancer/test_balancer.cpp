@@ -2,7 +2,7 @@
 #include <exception>
 #include <iostream>
 #include <unordered_map>
-#include "balancer/consul_balancer.h"
+#include "balancer/consul_resolver.h"
 
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);
