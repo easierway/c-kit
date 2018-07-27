@@ -1,0 +1,32 @@
+{
+    "clang.cxxflags": [
+        "-std=c++11",
+        "-fsyntax-only",
+        "-I${workspaceRoot}/**",
+        "-I${workspaceRoot}/include",
+        "-I${workspaceRoot}/third/boost/build/include",
+        "-I${workspaceRoot}/third/gtest/build/include",
+        "-I${workspaceRoot}/third/json11/build/include",
+        "-I${workspaceRoot}/third/curl/build/include"
+    ],
+    "C_Cpp.clang_format_fallbackStyle": "{BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 0, AlignConsecutiveDeclarations: true, AlignConsecutiveAssignments: true, FixNamespaceComments: false}",
+    "C_Cpp.intelliSenseEngine": "Tag Parser",
+    "files.associations": {
+        "__config": "cpp",
+        "__nullptr": "cpp",
+        "exception": "cpp",
+        "initializer_list": "cpp",
+        "stdexcept": "cpp",
+        "typeinfo": "cpp",
+        "algorithm": "cpp",
+        "*.ipp": "cpp",
+        "slist": "cpp",
+        "cfenv": "cpp",
+        "cmath": "cpp",
+        "functional": "cpp",
+        "tuple": "cpp",
+        "type_traits": "cpp",
+        "utility": "cpp",
+        "cstdio": "cpp"
+    }
+}
