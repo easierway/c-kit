@@ -2,6 +2,7 @@
 #include <sstream>
 #include <thread>
 #include <vector>
+#include <json11.hpp>
 
 namespace kit {
 
@@ -16,20 +17,35 @@ struct ServiceNode {
         ss << this->host << ":" << this->port;
         return ss.str();
     }
+    
+    json11::Json to_json() const {
+        return json11::Json::object {
+            {"host", this->host},
+            {"port", this->port},
+            {"zone", this->zone},
+            {"balancerFactor", this->balanceFactor},
+        };
+    }
 };
 
 struct ServiceZone {
     std::vector<std::shared_ptr<ServiceNode>> nodes;
     std::vector<int>                          factors;
     int                                       factorMax;
+    
+    json11::Json to_json() const {
+        return json11::Json::object {
+            {"nodes", ""},
+            {"factors", this->factors},
+            {"factorMax", this->factorMax},
+        };
+    }
 };
 
 class ConsulResolver {
     std::string                  address;
     std::string                  service;
-    uint64_t                     lastIndex;
     std::string                  myService;
-    uint64_t                     myLastIndex;
     std::string                  zone;
     int                          factorThreshold;
     int                          myServiceNum;
@@ -39,6 +55,22 @@ class ConsulResolver {
     bool                         done;
     int                          cpuPercentage;
     double                       ratio;
+    
+    json11::Json to_json() const {
+        return json11::Json::object {
+            {"address", this->address},
+            {"service", this->service},
+            {"myService", this->myService},
+            {"zone", this->zone},
+            {"factorThreshold", this->factorThreshold},
+            {"myServiceNum", this->myServiceNum},
+            {"intervalS", this->intervalS},
+            {"ratio", this->ratio},
+            {"cpuPercentage", this->cpuPercentage},
+            {"localZone", this->localZone->to_json()},
+            {"otherZone", this->otherZone->to_json()},
+        };
+    }
 
     std::thread* serviceUpdater;
     std::thread* cpuUpdater;

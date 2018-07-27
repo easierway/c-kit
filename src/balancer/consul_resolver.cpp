@@ -57,6 +57,8 @@ std::tuple<int, std::string> ConsulResolver::Start() {
             std::this_thread::sleep_for(std::chrono::seconds(this->intervalS));
         }
     });
+    
+    std::cout << "consul resolver start " << this->to_json().dump() << std::endl;
 
     return std::make_tuple(0, "");
 }
@@ -128,12 +130,9 @@ std::tuple<int, std::string> ConsulResolver::_resolve() {
     // TODO rwlock
     this->localZone = localZone;
     this->otherZone = otherZone;
-
-    //    var buf []byte
-    //    buf, _ = json.Marshal(r.localZone)
-    //    fmt.Printf("update localZone [%v], lastIndex [%v]\n", string(buf), r.lastIndex)
-    //    buf, _ = json.Marshal(r.otherZone)
-    //    fmt.Printf("update otherZone [%v], lastIndex [%v]\n", string(buf), r.lastIndex)
+    
+    std::cout << "update localZone [" << this->localZone->to_json().dump() << "]" << std::endl;
+    std::cout << "update otherZone [" << this->otherZone->to_json().dump() << "]" << std::endl;
 
     return std::make_tuple(0, "");
 }
@@ -176,7 +175,8 @@ std::tuple<int, std::string> ConsulResolver::_calFactorThreshold() {
     this->factorThreshold = factorThreshold;
     this->myServiceNum    = myServiceNum;
 
-    //    fmt.Printf("update factorThreshold [%v], lastIndex [%v]\n", r.factorThreshold, r.myLastIndex)
+    std::cout << "update factorThreadhold [" << factorThreshold << "]" << std::endl;
+    std::cout << "update myServiceNum [" << myServiceNum << "]" << std::endl;
 
     return std::make_tuple(0, "");
 }
