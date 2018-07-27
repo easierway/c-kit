@@ -16,5 +16,12 @@ TEST(testUtil, caseCpuUsage) {
 TEST(testUtil, caseZone) {
     std::cout << Zone() << std::endl;
 }
+    
+TEST(testUtil, caseHttpGet) {
+    std::string text;
+    int status;
+    std::tie(text, status, std::ignore) = HttpGet("http://www.baidu.com");
+    std::cout << status << " " << text << std::endl;
+}
 
-}  // namespace kit
+}

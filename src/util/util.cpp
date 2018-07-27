@@ -4,9 +4,11 @@
 #include <cstdint>
 #include <cstdio>
 #include <iostream>
+#include <sstream>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <curl/curl.h>
 
 namespace kit {
 
@@ -47,14 +49,14 @@ std::tuple<std::string, int> GetStatusOutput(const std::string& command) {
     std::string           result;
     auto                  fp = popen(command.c_str(), "r");
     if (fp == nullptr) {
-        return std::make_tuple<>("", -1);
+        return std::make_tuple("", -1);
     }
     while (!feof(fp)) {
         if (fgets(buffer.data(), 128, fp) != nullptr) {
             result += buffer.data();
         }
     }
-    return std::make_tuple<>(result, pclose(fp));
+    return std::make_tuple(result, pclose(fp));
 }
 
 std::string Zone() {
@@ -72,6 +74,38 @@ std::string Zone() {
     }
 
     return kv[1];
+}
+    
+    
+static size_t WriteToStream(void *ptr, size_t size, size_t nmemb, std::stringstream *stream) {
+    stream->write((const char*)ptr, size * nmemb);
+    return size * nmemb;
+}
+    
+std::tuple<std::string, int, std::string> HttpGet(std::string url) {
+    auto curl = curl_easy_init();
+    if (!curl) {
+        return std::make_tuple("", -1, "curl_easy_init failed");
+    }
+    
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteToStream);
+
+    std::stringstream body;
+    int status;
+    
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &body);
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
+    
+    auto code = curl_easy_perform(curl);
+    if (code != CURLE_OK) {
+        std::stringstream ss;
+        ss << "curl_easy_perform is not ok, code: [" << code << "]";
+        return std::make_tuple(body.str(), -1, ss.str());
+    }
+    curl_easy_cleanup(curl);
+    
+    return std::make_tuple(body.str(), status, "ok");
 }
 
 }  // namespace kit

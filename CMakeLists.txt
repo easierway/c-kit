@@ -64,21 +64,21 @@ ExternalProject_Add(
 add_dependencies(haxx_curl openssl_openssl)
 add_dependencies(third haxx_curl)
 
-ExternalProject_Add(
-    oliora_ppconsul
-    URL https://github.com/oliora/ppconsul/archive/master.zip
-    PREFIX ${C_KIT_SOURCE_DIR}/third/ppconsul
-    CMAKE_ARGS
-        -DCMAKE_INSTALL_PREFIX:PATH=${C_KIT_SOURCE_DIR}/third/ppconsul/build
-        -DBOOST_ROOT=${C_KIT_SOURCE_DIR}/third/boost/build
-        -DCURL_ROOT=${C_KIT_SOURCE_DIR}/third/curl/build
-        -DBUILD_STATIC_LIB=ON
-        --build . --config Release --target install
-)
-add_dependencies(oliora_ppconsul boostorg_boost)
-add_dependencies(oliora_ppconsul dropbox_json11)
-add_dependencies(oliora_ppconsul haxx_curl)
-add_dependencies(third oliora_ppconsul)
+# ExternalProject_Add(
+#     oliora_ppconsul
+#     URL https://github.com/oliora/ppconsul/archive/master.zip
+#     PREFIX ${C_KIT_SOURCE_DIR}/third/ppconsul
+#     CMAKE_ARGS
+#         -DCMAKE_INSTALL_PREFIX:PATH=${C_KIT_SOURCE_DIR}/third/ppconsul/build
+#         -DBOOST_ROOT=${C_KIT_SOURCE_DIR}/third/boost/build
+#         -DCURL_ROOT=${C_KIT_SOURCE_DIR}/third/curl/build
+#         -DBUILD_STATIC_LIB=ON
+#         --build . --config Release --target install
+# )
+# add_dependencies(oliora_ppconsul boostorg_boost)
+# add_dependencies(oliora_ppconsul dropbox_json11)
+# add_dependencies(oliora_ppconsul haxx_curl)
+# add_dependencies(third oliora_ppconsul)
 
 set(CMAKE_CXX_FLAGS "-w -g -std=c++11 -lpthread")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2")
@@ -86,33 +86,35 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 include_directories(
     "${C_KIT_SOURCE_DIR}/include"
     "${C_KIT_SOURCE_DIR}/third/gtest/build/include"
-    "${C_KIT_SOURCE_DIR}/third/ppconsul/build/include"
+    # "${C_KIT_SOURCE_DIR}/third/ppconsul/build/include"
     "${C_KIT_SOURCE_DIR}/third/boost/build/include"
+    "${C_KIT_SOURCE_DIR}/third/curl/build/include"
 )
 
 link_directories(
     "${C_KIT_SOURCE_DIR}/third/gtest/build/lib"
+    "${C_KIT_SOURCE_DIR}/third/curl/build/lib"
 )
 
-if(APPLE)
-    link_directories(
-        "${C_KIT_SOURCE_DIR}/third/ppconsul/build/lib"
-    )
-else()
-    link_directories(
-        "${C_KIT_SOURCE_DIR}/third/ppconsul/build/lib64"
-    )
-endif()
-
-aux_source_directory(src/balancer balancer_source)
-add_executable(test_balancer ${balancer_source} test/balancer/test_balancer.cpp)
-add_dependencies(test_balancer third)
-target_link_libraries(test_balancer gtest ppconsul)
+# if(APPLE)
+#     link_directories(
+#         "${C_KIT_SOURCE_DIR}/third/ppconsul/build/lib"
+#     )
+# else()
+#     link_directories(
+#         "${C_KIT_SOURCE_DIR}/third/ppconsul/build/lib64"
+#     )
+# endif()
 
 aux_source_directory(src/util util_source)
 add_executable(test_util ${util_source} test/util/test_util.cpp)
 add_dependencies(test_util third)
-target_link_libraries(test_util gtest)
+target_link_libraries(test_util gtest curl)
+
+aux_source_directory(src/balancer balancer_source)
+add_executable(test_balancer ${balancer_source} ${util_source} test/balancer/test_balancer.cpp)
+add_dependencies(test_balancer third)
+target_link_libraries(test_balancer gtest curl)
 
 enable_testing()
 add_test(NAME test_balancer COMMAND test_balancer)
