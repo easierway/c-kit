@@ -1,14 +1,14 @@
 #include "util/util.h"
+#include <curl/curl.h>
 #include <array>
 #include <boost/algorithm/string.hpp>
 #include <cstdint>
 #include <cstdio>
 #include <iostream>
-#include <sstream>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
-#include <curl/curl.h>
 
 namespace kit {
 
@@ -44,7 +44,7 @@ double CPUUsage() {
     return percent;
 }
 
-std::tuple<std::string, int> GetStatusOutput(const std::string& command) {
+std::tuple<std::string, int> GetStatusOutput(const std::string &command) {
     std::array<char, 128> buffer;
     std::string           result;
     auto                  fp = popen(command.c_str(), "r");
@@ -75,37 +75,40 @@ std::string Zone() {
 
     return kv[1];
 }
-    
-    
+
 static size_t WriteToStream(void *ptr, size_t size, size_t nmemb, std::stringstream *stream) {
-    stream->write((const char*)ptr, size * nmemb);
+    stream->write((const char *)ptr, size * nmemb);
     return size * nmemb;
 }
-    
+
 std::tuple<std::string, int, std::string> HttpGet(std::string url) {
     auto curl = curl_easy_init();
     if (!curl) {
         return std::make_tuple("", -1, "curl_easy_init failed");
     }
-    
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteToStream);
 
     std::stringstream body;
-    int status;
-    
+    long              status;
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteToStream);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &body);
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
-    
     auto code = curl_easy_perform(curl);
     if (code != CURLE_OK) {
+        curl_easy_cleanup(curl);
         std::stringstream ss;
-        ss << "curl_easy_perform is not ok, code: [" << code << "]";
+        ss << "curl_easy_perform is not ok, code: [" << code << "] url: [" << url << "]";
         return std::make_tuple(body.str(), -1, ss.str());
     }
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
     curl_easy_cleanup(curl);
-    
-    return std::make_tuple(body.str(), status, "ok");
+
+    if (status == 200) {
+        return std::make_tuple(body.str(), status, "");
+    }
+
+    std::stringstream ss;
+    ss << "curl_easy_perform is not ok, status: [" << status << "] url: [" << url << "]";
+    return std::make_tuple(body.str(), status, ss.str());
 }
 
 }  // namespace kit

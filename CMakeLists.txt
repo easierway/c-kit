@@ -34,6 +34,14 @@ add_dependencies(third boostorg_boost)
 # )
 # add_dependencies(third libb64_libb64)
 
+# ExternalProject_Add(
+#     nlohmann_json
+#     URL https://github.com/nlohmann/json/archive/v3.1.2.zip
+#     PREFIX ${HELLO_CPP_SOURCE_DIR}/third/json
+#     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${HELLO_CPP_SOURCE_DIR}/third/json/build -DBUILD_SHARED_LIBS=OFF
+# )
+# add_dependencies(third nlohmann_json)
+
 ExternalProject_Add(
     dropbox_json11
     URL https://github.com/dropbox/json11/archive/master.zip
@@ -89,11 +97,13 @@ include_directories(
     # "${C_KIT_SOURCE_DIR}/third/ppconsul/build/include"
     "${C_KIT_SOURCE_DIR}/third/boost/build/include"
     "${C_KIT_SOURCE_DIR}/third/curl/build/include"
+    "${C_KIT_SOURCE_DIR}/third/json11/build/include"
 )
 
 link_directories(
     "${C_KIT_SOURCE_DIR}/third/gtest/build/lib"
     "${C_KIT_SOURCE_DIR}/third/curl/build/lib"
+    "${C_KIT_SOURCE_DIR}/third/json11/build/lib"
 )
 
 # if(APPLE)
@@ -114,7 +124,7 @@ target_link_libraries(test_util gtest curl)
 aux_source_directory(src/balancer balancer_source)
 add_executable(test_balancer ${balancer_source} ${util_source} test/balancer/test_balancer.cpp)
 add_dependencies(test_balancer third)
-target_link_libraries(test_balancer gtest curl)
+target_link_libraries(test_balancer gtest curl json11)
 
 enable_testing()
 add_test(NAME test_balancer COMMAND test_balancer)

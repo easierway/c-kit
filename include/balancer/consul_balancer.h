@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <thread>
 #include <vector>
 
 namespace kit {
@@ -24,30 +25,38 @@ struct ServiceZone {
 };
 
 class ConsulResolver {
-//    std::shared_ptr<ppconsul::catalog::Catalog> client;
-    std::string                                 service;
-    uint64_t                                    lastIndex;
-    std::string                                 myService;
-    uint64_t                                    myLastIndex;
-    std::string                                 zone;
-    int                                         factorThreshold;
-    int                                         myServiceNum;
-    std::shared_ptr<ServiceZone>                localZone;
-    std::shared_ptr<ServiceZone>                otherZone;
-    int                                         intervalS;
-    bool                                        done;
-    int                                         cpuPercentage;
-    double                                      ratio;
+    //    std::shared_ptr<ppconsul::catalog::Catalog> client;
+    std::string                  address;
+    std::string                  service;
+    uint64_t                     lastIndex;
+    std::string                  myService;
+    uint64_t                     myLastIndex;
+    std::string                  zone;
+    int                          factorThreshold;
+    int                          myServiceNum;
+    std::shared_ptr<ServiceZone> localZone;
+    std::shared_ptr<ServiceZone> otherZone;
+    int                          intervalS;
+    bool                         done;
+    int                          cpuPercentage;
+    double                       ratio;
 
-    double _cpuUsage();
-    void   _resolve();
-    void   _calFactorThreshold();
+    std::thread* serviceUpdater;
+    std::thread* cpuUpdater;
+    std::thread* factorUpdater;
+
+    double                       _cpuUsage();
+    std::tuple<int, std::string> _resolve();
+    std::tuple<int, std::string> _calFactorThreshold();
 
    public:
     ConsulResolver(const std::string& address,
                    const std::string& service,
-                   const std::string& myServices,
+                   const std::string& myService,
                    int intervalS, double ratio);
+
+    std::tuple<int, std::string> Start();
+    std::tuple<int, std::string> Stop();
 
     std::shared_ptr<ServiceZone> GetLocalZone() {
         return this->localZone;
