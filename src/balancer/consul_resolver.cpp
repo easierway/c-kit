@@ -10,43 +10,43 @@ ConsulResolver::ConsulResolver(const std::string& address,
                                const std::string& service,
                                const std::string& myService,
                                int intervalS, double ratio) {
-    this->address        = address;
-    this->service        = service;
-    this->myService      = myService;
-    this->intervalS      = intervalS;
-    this->zone           = Zone();
-    this->done           = false;
-    this->cpuPercentage  = CPUUsage();
-    this->ratio          = ratio;
-    this->serviceUpdater = nullptr;
-    this->factorUpdater  = nullptr;
-    this->cpuUpdater     = nullptr;
+    this->address                = address;
+    this->service                = service;
+    this->myService              = myService;
+    this->intervalS              = intervalS;
+    this->zone                   = Zone();
+    this->done                   = false;
+    this->cpuPercentage          = CPUUsage();
+    this->ratio                  = ratio;
+    this->serviceUpdater         = nullptr;
+    this->factorThresholdUpdater = nullptr;
+    this->cpuUpdater             = nullptr;
 }
 
 std::tuple<int, std::string> ConsulResolver::Start() {
     std::string err;
     int         code;
 
-    std::tie(code, err) = this->_resolve();
+    std::tie(code, err) = this->_updateServiceZone();
     if (code != 0) {
         return std::make_tuple(code, err);
     }
 
-    std::tie(code, err) = this->_calFactorThreshold();
+    std::tie(code, err) = this->_updateFactorThreshold();
     if (code != 0) {
         return std::make_tuple(code, err);
     }
 
     this->serviceUpdater = new std::thread([&]() {
         while (!this->done) {
-            this->_resolve();
+            this->_updateServiceZone();
             std::this_thread::sleep_for(std::chrono::seconds(this->intervalS));
         }
     });
 
-    this->factorUpdater = new std::thread([&]() {
+    this->factorThresholdUpdater = new std::thread([&]() {
         while (!this->done) {
-            this->_calFactorThreshold();
+            this->_updateFactorThreshold();
             std::this_thread::sleep_for(std::chrono::seconds(this->intervalS));
         }
     });
@@ -66,7 +66,7 @@ std::tuple<int, std::string> ConsulResolver::Start() {
 std::tuple<int, std::string> ConsulResolver::Stop() {
     this->done = true;
 
-    for (const auto& t : {this->serviceUpdater, this->factorUpdater, this->cpuUpdater}) {
+    for (const auto& t : {this->serviceUpdater, this->factorThresholdUpdater, this->cpuUpdater}) {
         if (t != nullptr) {
             if (t->joinable()) {
                 t->join();
@@ -74,14 +74,14 @@ std::tuple<int, std::string> ConsulResolver::Stop() {
             delete t;
         }
     }
-    this->serviceUpdater = nullptr;
-    this->factorUpdater  = nullptr;
-    this->cpuUpdater     = nullptr;
+    this->serviceUpdater         = nullptr;
+    this->factorThresholdUpdater = nullptr;
+    this->cpuUpdater             = nullptr;
 
     return std::make_tuple(0, "");
 }
 
-std::tuple<int, std::string> ConsulResolver::_resolve() {
+std::tuple<int, std::string> ConsulResolver::_updateServiceZone() {
     std::string body;
     int         status = -1;
     std::string err;
@@ -137,7 +137,7 @@ std::tuple<int, std::string> ConsulResolver::_resolve() {
     return std::make_tuple(0, "");
 }
 
-std::tuple<int, std::string> ConsulResolver::_calFactorThreshold() {
+std::tuple<int, std::string> ConsulResolver::_updateFactorThreshold() {
     std::string body;
     int         status;
     std::string err;
@@ -184,6 +184,7 @@ std::tuple<int, std::string> ConsulResolver::_calFactorThreshold() {
 std::shared_ptr<ServiceNode> ConsulResolver::DiscoverNode() {
     auto localZone = this->localZone;
     auto otherZone = this->otherZone;
+
     if (localZone->factorMax + otherZone->factorMax == 0) {
         return std::shared_ptr<ServiceNode>(nullptr);
     }

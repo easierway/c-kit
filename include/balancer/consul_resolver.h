@@ -1,8 +1,8 @@
 #include <iostream>
+#include <json11.hpp>
 #include <sstream>
 #include <thread>
 #include <vector>
-#include <json11.hpp>
 
 namespace kit {
 
@@ -17,9 +17,9 @@ struct ServiceNode {
         ss << this->host << ":" << this->port;
         return ss.str();
     }
-    
+
     json11::Json to_json() const {
-        return json11::Json::object {
+        return json11::Json::object{
             {"host", this->host},
             {"port", this->port},
             {"zone", this->zone},
@@ -32,9 +32,9 @@ struct ServiceZone {
     std::vector<std::shared_ptr<ServiceNode>> nodes;
     std::vector<int>                          factors;
     int                                       factorMax;
-    
+
     json11::Json to_json() const {
-        return json11::Json::object {
+        return json11::Json::object{
             {"nodes", ""},
             {"factors", this->factors},
             {"factorMax", this->factorMax},
@@ -55,9 +55,10 @@ class ConsulResolver {
     bool                         done;
     int                          cpuPercentage;
     double                       ratio;
-    
+    std::mutex                   serviceUpdaterMutex;
+
     json11::Json to_json() const {
-        return json11::Json::object {
+        return json11::Json::object{
             {"address", this->address},
             {"service", this->service},
             {"myService", this->myService},
@@ -73,12 +74,11 @@ class ConsulResolver {
     }
 
     std::thread* serviceUpdater;
+    std::thread* factorThresholdUpdater;
     std::thread* cpuUpdater;
-    std::thread* factorUpdater;
 
-    double                       _cpuUsage();
-    std::tuple<int, std::string> _resolve();
-    std::tuple<int, std::string> _calFactorThreshold();
+    std::tuple<int, std::string> _updateServiceZone();
+    std::tuple<int, std::string> _updateFactorThreshold();
 
    public:
     ConsulResolver(const std::string& address,
