@@ -53,7 +53,12 @@ std::tuple<int, std::string> ConsulResolver::Start() {
 
     this->cpuUpdater = new std::thread([&]() {
         while (!this->done) {
-            this->cpuPercentage = CPUUsage();
+            int usage = CPUUsage();
+            if (usage <= 0) {
+                this->cpuPercentage = 1;
+            } else {
+                this->cpuPercentage = usage;
+            }
             std::this_thread::sleep_for(std::chrono::seconds(this->intervalS));
         }
     });
