@@ -15,10 +15,10 @@ ConsulResolver::ConsulResolver(
     this->service                = service;
     this->myService              = myService;
     this->intervalS              = intervalS;
-    this->zone                   = Zone();
-    this->done                   = false;
-    this->cpuUsage               = CPUUsage();
     this->ratio                  = ratio;
+    this->done                   = false;
+    this->zone                   = Zone();
+    this->cpuUsage               = CPUUsage();
     this->serviceUpdater         = nullptr;
     this->factorThresholdUpdater = nullptr;
     this->cpuUpdater             = nullptr;
