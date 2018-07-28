@@ -6,6 +6,14 @@ include(ExternalProject)
 add_custom_target(third)
 
 ExternalProject_Add(
+    log4cplus_log4cplus
+    URL https://github.com/log4cplus/log4cplus/archive/REL_1_2_1.zip
+    PREFIX ${C_KIT_SOURCE_DIR}/third/log4cplus
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${C_KIT_SOURCE_DIR}/third/log4cplus/build -DBUILD_SHARED_LIBS=OFF    
+)
+add_dependencies(third log4cplus_log4cplus)
+
+ExternalProject_Add(
     google_gtest
     URL https://github.com/google/googletest/archive/release-1.8.0.zip
     PREFIX ${C_KIT_SOURCE_DIR}/third/gtest
@@ -63,6 +71,7 @@ include_directories(
     "${C_KIT_SOURCE_DIR}/third/boost/build/include"
     "${C_KIT_SOURCE_DIR}/third/curl/build/include"
     "${C_KIT_SOURCE_DIR}/third/json11/build/include"
+    "${C_KIT_SOURCE_DIR}/third/log4cplus/build/include"
 )
 
 link_directories(
@@ -70,6 +79,7 @@ link_directories(
     "${C_KIT_SOURCE_DIR}/third/boost/build/lib"
     "${C_KIT_SOURCE_DIR}/third/curl/build/lib"
     "${C_KIT_SOURCE_DIR}/third/json11/build/lib"
+    "${C_KIT_SOURCE_DIR}/third/log4cplus/build/lib"
 )
 
 aux_source_directory(src/util util_source)
@@ -80,7 +90,7 @@ target_link_libraries(test_util gtest curl)
 aux_source_directory(src/balancer balancer_source)
 add_executable(test_balancer ${balancer_source} ${util_source} test/balancer/test_balancer.cpp)
 add_dependencies(test_balancer third)
-target_link_libraries(test_balancer gtest curl json11 boost_system boost_thread)
+target_link_libraries(test_balancer gtest curl json11 boost_system boost_thread log4cplus)
 
 enable_testing()
 add_test(NAME test_balancer COMMAND test_balancer)

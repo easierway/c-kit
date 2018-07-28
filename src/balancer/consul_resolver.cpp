@@ -1,4 +1,5 @@
 #include "balancer/consul_resolver.h"
+#include <log4cplus/loggingmacros.h>
 #include <algorithm>
 #include <chrono>
 #include <json11.hpp>
@@ -22,6 +23,7 @@ ConsulResolver::ConsulResolver(
     this->serviceUpdater         = nullptr;
     this->factorThresholdUpdater = nullptr;
     this->cpuUpdater             = nullptr;
+    this->logger                 = nullptr;
 }
 
 std::tuple<int, std::string> ConsulResolver::Start() {
@@ -40,14 +42,24 @@ std::tuple<int, std::string> ConsulResolver::Start() {
 
     this->serviceUpdater = new std::thread([&]() {
         while (!this->done) {
-            this->_updateServiceZone();
+            int         code;
+            std::string err;
+            std::tie(code, err) = this->_updateServiceZone();
+            if (code != 0 && this->logger != nullptr) {
+                LOG4CPLUS_WARN(*(this->logger), "update service zone failed. code: [" << code << "], err: [" << err << "]");
+            }
             std::this_thread::sleep_for(std::chrono::seconds(this->intervalS));
         }
     });
 
     this->factorThresholdUpdater = new std::thread([&]() {
         while (!this->done) {
-            this->_updateFactorThreshold();
+            int         code;
+            std::string err;
+            std::tie(code, err) = this->_updateFactorThreshold();
+            if (code != 0 && this->logger != nullptr) {
+                LOG4CPLUS_WARN(*(this->logger), "update factor threshold failed. code: [" << code << "], err: [" << err << "]");
+            }
             std::this_thread::sleep_for(std::chrono::seconds(this->intervalS));
         }
     });
@@ -64,7 +76,9 @@ std::tuple<int, std::string> ConsulResolver::Start() {
         }
     });
 
-    std::cout << "consul resolver start " << this->to_json().dump() << std::endl;
+    if (logger != nullptr) {
+        LOG4CPLUS_INFO(*(this->logger), "consul resolver start " << this->to_json().dump());
+    }
 
     return std::make_tuple(0, "");
 }
@@ -138,8 +152,10 @@ std::tuple<int, std::string> ConsulResolver::_updateServiceZone() {
     this->otherZone = otherZone;
     this->serviceUpdaterMutex.unlock();
 
-    std::cout << "update localZone [" << this->localZone->to_json().dump() << "]" << std::endl;
-    std::cout << "update otherZone [" << this->otherZone->to_json().dump() << "]" << std::endl;
+    if (logger != nullptr) {
+        LOG4CPLUS_INFO(*(this->logger), "update localZone [" << this->localZone->to_json().dump() << "]");
+        LOG4CPLUS_INFO(*(this->logger), "update otherZone [" << this->otherZone->to_json().dump() << "]");
+    }
 
     return std::make_tuple(0, "");
 }
@@ -181,8 +197,10 @@ std::tuple<int, std::string> ConsulResolver::_updateFactorThreshold() {
     this->factorThreshold = factorThreshold;
     this->myServiceNum    = myServiceNum;
 
-    std::cout << "update factorThreadhold [" << factorThreshold << "]" << std::endl;
-    std::cout << "update myServiceNum [" << myServiceNum << "]" << std::endl;
+    if (logger != nullptr) {
+        LOG4CPLUS_INFO(*(this->logger), "update factorThreadhold [" << factorThreshold << "]");
+        LOG4CPLUS_INFO(*(this->logger), "update myServiceNum [" << myServiceNum << "]");
+    }
 
     return std::make_tuple(0, "");
 }

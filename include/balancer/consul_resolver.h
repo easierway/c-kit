@@ -1,3 +1,4 @@
+#include <log4cplus/logger.h>
 #include <boost/thread/shared_mutex.hpp>
 #include <iostream>
 #include <json11.hpp>
@@ -61,6 +62,7 @@ class ConsulResolver {
     int                          cpuUsage;
     double                       ratio;
     boost::shared_mutex          serviceUpdaterMutex;
+    log4cplus::Logger*           logger;
 
     json11::Json to_json() const {
         return json11::Json::object{
@@ -92,6 +94,9 @@ class ConsulResolver {
         const std::string& myService,
         int intervalS, double ratio);
 
+    void SetLogger(log4cplus::Logger* logger) {
+        this->logger = logger;
+    }
     std::tuple<int, std::string> Start();
     std::tuple<int, std::string> Stop();
 
