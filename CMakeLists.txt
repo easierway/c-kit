@@ -82,6 +82,16 @@ link_directories(
     "${C_KIT_SOURCE_DIR}/third/log4cplus/build/lib"
 )
 
+if (APPLE)
+    link_directories(
+        "${C_KIT_SOURCE_DIR}/third/log4cplus/build/lib"
+    )
+else()
+    link_directories(
+        "${C_KIT_SOURCE_DIR}/third/log4cplus/build/lib64"
+    )
+endif()
+
 aux_source_directory(src/util util_source)
 add_executable(test_util ${util_source} test/util/test_util.cpp)
 add_dependencies(test_util third)
