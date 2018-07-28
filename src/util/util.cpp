@@ -44,31 +44,31 @@ double CPUUsage() {
     return percent;
 }
 
-std::tuple<std::string, int> GetStatusOutput(const std::string &command) {
+std::tuple<int, std::string> GetStatusOutput(const std::string &command) {
     std::array<char, 128> buffer;
     std::string           result;
     auto                  fp = popen(command.c_str(), "r");
     if (fp == nullptr) {
-        return std::make_tuple("", -1);
+        return std::make_tuple(-1, "");
     }
     while (!feof(fp)) {
         if (fgets(buffer.data(), 128, fp) != nullptr) {
             result += buffer.data();
         }
     }
-    return std::make_tuple(result, pclose(fp));
+    return std::make_tuple(pclose(fp), result);
 }
 
 std::string Zone() {
     std::string output;
     int         status;
-    std::tie(output, status) = GetStatusOutput("/opt/aws/bin/ec2-metadata -z");
+    std::tie(status, output) = GetStatusOutput("/opt/aws/bin/ec2-metadata -z");
     if (status != 0) {
         return "unknown";
     }
 
     std::vector<std::string> kv;
-    auto str = output.substr(0, output.length() - 1);
+    auto                     str = output.substr(0, output.length() - 1);
     boost::split(kv, str, boost::is_any_of(" "));
     if (kv.size() != 2) {
         return "unknown";
@@ -82,10 +82,10 @@ static size_t WriteToStream(void *ptr, size_t size, size_t nmemb, std::stringstr
     return size * nmemb;
 }
 
-std::tuple<std::string, int, std::string> HttpGet(std::string url) {
+std::tuple<int, std::string, std::string> HttpGet(const std::string &url) {
     auto curl = curl_easy_init();
     if (!curl) {
-        return std::make_tuple("", -1, "curl_easy_init failed");
+        return std::make_tuple(-1, "", "curl_easy_init failed");
     }
 
     std::stringstream body;
@@ -98,18 +98,18 @@ std::tuple<std::string, int, std::string> HttpGet(std::string url) {
         curl_easy_cleanup(curl);
         std::stringstream ss;
         ss << "curl_easy_perform is not ok, code: [" << code << "] url: [" << url << "]";
-        return std::make_tuple(body.str(), -1, ss.str());
+        return std::make_tuple(-1, body.str(), ss.str());
     }
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
     curl_easy_cleanup(curl);
 
     if (status == 200) {
-        return std::make_tuple(body.str(), status, "");
+        return std::make_tuple(status, body.str(), "");
     }
 
     std::stringstream ss;
     ss << "curl_easy_perform is not ok, status: [" << status << "] url: [" << url << "]";
-    return std::make_tuple(body.str(), status, ss.str());
+    return std::make_tuple(status, body.str(), ss.str());
 }
 
 }  // namespace kit

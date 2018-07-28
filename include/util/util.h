@@ -2,8 +2,12 @@
 
 namespace kit {
 
-double                                    CPUUsage();
-std::string                               Zone();
-std::tuple<std::string, int>              GetStatusOutput(const std::string& command);
-std::tuple<std::string, int, std::string> HttpGet(std::string url);
+double      CPUUsage();
+std::string Zone();
+
+// return status, output
+std::tuple<int, std::string> GetStatusOutput(const std::string& command);
+
+// return status, body, error
+std::tuple<int, std::string, std::string> HttpGet(const std::string& url);
 }

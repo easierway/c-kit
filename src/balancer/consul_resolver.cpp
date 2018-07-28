@@ -91,7 +91,7 @@ std::tuple<int, std::string> ConsulResolver::_updateServiceZone() {
     std::string body;
     int         status = -1;
     std::string err;
-    std::tie(body, status, err) = HttpGet(this->address + "/v1/health/service/" + this->service + "?passing=true");
+    std::tie(status, body, err) = HttpGet(this->address + "/v1/health/service/" + this->service + "?passing=true");
     if (status != 200) {
         return std::make_tuple(-1, "HttpGet failed. err [" + err + "]");
     }
@@ -148,7 +148,7 @@ std::tuple<int, std::string> ConsulResolver::_updateFactorThreshold() {
     std::string body;
     int         status;
     std::string err;
-    std::tie(body, status, err) = HttpGet(this->address + "/v1/health/service/" + this->myService + "?passing=true");
+    std::tie(status, body, err) = HttpGet(this->address + "/v1/health/service/" + this->myService + "?passing=true");
     if (status != 200) {
         return std::make_tuple(-1, "HttpGet failed. err [" + err + "]");
     }

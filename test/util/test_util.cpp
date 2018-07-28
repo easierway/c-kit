@@ -18,9 +18,9 @@ TEST(testUtil, caseZone) {
 }
 
 TEST(testUtil, caseHttpGet) {
-    std::string text;
+    std::string body;
     int         status;
-    std::tie(text, status, std::ignore) = HttpGet("http://www.baidu.com");
-    std::cout << status << " " << text << std::endl;
+    std::tie(status, body, std::ignore) = HttpGet("http://www.baidu.com");
+    std::cout << status << " " << body << std::endl;
 }
 }
