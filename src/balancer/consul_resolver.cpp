@@ -17,7 +17,7 @@ ConsulResolver::ConsulResolver(
     this->intervalS              = intervalS;
     this->zone                   = Zone();
     this->done                   = false;
-    this->cpuPercentage          = CPUUsage();
+    this->cpuUsage               = CPUUsage();
     this->ratio                  = ratio;
     this->serviceUpdater         = nullptr;
     this->factorThresholdUpdater = nullptr;
@@ -56,9 +56,9 @@ std::tuple<int, std::string> ConsulResolver::Start() {
         while (!this->done) {
             int usage = CPUUsage();
             if (usage <= 0) {
-                this->cpuPercentage = 1;
+                this->cpuUsage = 1;
             } else {
-                this->cpuPercentage = usage;
+                this->cpuUsage = usage;
             }
             std::this_thread::sleep_for(std::chrono::seconds(this->intervalS));
         }
@@ -203,7 +203,7 @@ std::shared_ptr<ServiceNode> ConsulResolver::DiscoverNode() {
         auto n          = double(localZone->factors.size() + otherZone->factors.size());
         factorThreshold = int(m / n);
     }
-    factorThreshold = factorThreshold * this->cpuPercentage / 100;
+    factorThreshold = factorThreshold * this->cpuUsage / 100;
 
     auto serviceZone = localZone;
     if (factorThreshold > localZone->factorMax || localZone->factorMax <= 0) {

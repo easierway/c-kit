@@ -35,8 +35,12 @@ struct ServiceZone {
     int                                       factorMax;
 
     json11::Json to_json() const {
+        std::vector<ServiceNode> nodes(this->nodes.size());
+        for (int i = 0; i < this->nodes.size(); i++) {
+            nodes[i] = *(this->nodes[i]);
+        }
         return json11::Json::object{
-            {"nodes", ""},
+            {"nodes", nodes},
             {"factors", this->factors},
             {"factorMax", this->factorMax},
         };
@@ -54,7 +58,7 @@ class ConsulResolver {
     std::shared_ptr<ServiceZone> otherZone;
     int                          intervalS;
     bool                         done;
-    int                          cpuPercentage;
+    int                          cpuUsage;
     double                       ratio;
     boost::shared_mutex          serviceUpdaterMutex;
 
@@ -68,7 +72,7 @@ class ConsulResolver {
             {"myServiceNum", this->myServiceNum},
             {"intervalS", this->intervalS},
             {"ratio", this->ratio},
-            {"cpuPercentage", this->cpuPercentage},
+            {"cpuUsage", this->cpuUsage},
             {"localZone", this->localZone->to_json()},
             {"otherZone", this->otherZone->to_json()},
         };
