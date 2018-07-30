@@ -99,8 +99,6 @@ class ConsulResolver {
         int                intervalS    = 10,
         double             serviceRatio = 0,
         double             cpuThreshold = 0.6);
-    ConsulResolver() : ConsulResolver("", "") {}
-    ~ConsulResolver() = default;
 
     void SetLogger(log4cplus::Logger* logger) {
         this->logger = logger;
