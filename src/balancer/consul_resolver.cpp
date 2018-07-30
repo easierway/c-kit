@@ -8,15 +8,18 @@
 namespace kit {
 
 ConsulResolver::ConsulResolver(
-    const std::string& address,
     const std::string& service,
     const std::string& myService,
-    int intervalS, double ratio) {
+    const std::string& address,
+    int                intervalS,
+    double             serviceRatio,
+    double             cpuThreshold) {
     this->address                = address;
     this->service                = service;
     this->myService              = myService;
     this->intervalS              = intervalS;
-    this->ratio                  = ratio;
+    this->serviceRatio           = serviceRatio;
+    this->cpuThreshold           = cpuThreshold;
     this->done                   = false;
     this->zone                   = Zone();
     this->cpuUsage               = CPUUsage();
@@ -216,12 +219,15 @@ std::shared_ptr<ServiceNode> ConsulResolver::DiscoverNode() {
     }
 
     auto factorThreshold = this->factorThreshold;
-    if (this->ratio != 0) {
-        auto m          = double((localZone->factorMax + otherZone->factorMax) * this->myServiceNum) * this->ratio;
+    if (this->serviceRatio != 0) {
+        auto m          = double((localZone->factorMax + otherZone->factorMax) * this->myServiceNum) * this->serviceRatio;
         auto n          = double(localZone->factors.size() + otherZone->factors.size());
         factorThreshold = int(m / n);
     }
     factorThreshold = factorThreshold * this->cpuUsage / 100;
+    if (this->cpuThreshold != 0) {
+        factorThreshold = int(double(factorThreshold) / this->cpuThreshold);
+    }
 
     auto serviceZone = localZone;
     if (factorThreshold > localZone->factorMax || localZone->factorMax <= 0) {

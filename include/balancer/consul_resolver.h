@@ -49,20 +49,21 @@ struct ServiceZone {
 };
 
 class ConsulResolver {
-    std::string                  address;
-    std::string                  service;
-    std::string                  myService;
-    std::string                  zone;
-    int                          factorThreshold;
-    int                          myServiceNum;
-    std::shared_ptr<ServiceZone> localZone;
-    std::shared_ptr<ServiceZone> otherZone;
-    int                          intervalS;
-    bool                         done;
-    int                          cpuUsage;
-    double                       ratio;
-    boost::shared_mutex          serviceUpdaterMutex;
-    log4cplus::Logger*           logger;
+    std::string                  address;              // consul 地址，一般为本地 agent
+    std::string                  service;              // 要访问的服务名
+    std::string                  myService;            // 本服务名
+    std::string                  zone;                 // 服务地区
+    double                       serviceRatio;         // 要访问的服务与本服务比例
+    double                       cpuThreshold;         // cpu 阀值，根据 qps 预测要访问的服务 cpu，超过阀值，跨 zone 访问，[0,1]
+    int                          factorThreshold;      // 本地区服务负载的阀值，超过该负载将跨 zone 访问
+    int                          myServiceNum;         // local zone 的服务数量
+    std::shared_ptr<ServiceZone> localZone;            // 本地服务列表
+    std::shared_ptr<ServiceZone> otherZone;            // 其他 zone 服务列表
+    int                          cpuUsage;             // cpu 使用率， [1,100]
+    int                          intervalS;            // 服务列表更新最小间隔秒数
+    bool                         done;                 // 退出标记
+    boost::shared_mutex          serviceUpdaterMutex;  // 服务更新锁
+    log4cplus::Logger*           logger;               // 日志
 
     json11::Json to_json() const {
         return json11::Json::object{
@@ -73,7 +74,8 @@ class ConsulResolver {
             {"factorThreshold", this->factorThreshold},
             {"myServiceNum", this->myServiceNum},
             {"intervalS", this->intervalS},
-            {"ratio", this->ratio},
+            {"serviceRatio", this->serviceRatio},
+            {"cpuThreshold", this->cpuThreshold},
             {"cpuUsage", this->cpuUsage},
             {"localZone", this->localZone->to_json()},
             {"otherZone", this->otherZone->to_json()},
@@ -89,10 +91,12 @@ class ConsulResolver {
 
    public:
     ConsulResolver(
-        const std::string& address,
         const std::string& service,
         const std::string& myService,
-        int intervalS, double ratio);
+        const std::string& address      = "http://127.0.0.1:8500",
+        int                intervalS    = 10,
+        double             serviceRatio = 0,
+        double             cpuThreshold = 0.6);
 
     void SetLogger(log4cplus::Logger* logger) {
         this->logger = logger;

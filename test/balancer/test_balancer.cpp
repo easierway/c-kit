@@ -18,7 +18,7 @@ TEST(testBalancer, caseConsulResolver) {
     config.configure();
     log4cplus::Logger logger = log4cplus::Logger::getInstance("info");
 
-    auto resolver = std::make_shared<ConsulResolver>("http://127.0.0.1:8500", "hatlonly-test-service", "my-service", 1, 0);
+    auto resolver = std::make_shared<ConsulResolver>("hatlonly-test-service", "my-service", "http://127.0.0.1:8500", 1, 0, 0);
     resolver->SetLogger(&logger);
     int         code;
     std::string err;
@@ -45,7 +45,7 @@ TEST(testBalancer, caseConcurrency) {
     log4cplus::PropertyConfigurator config(LOG4CPLUS_C_STR_TO_TSTRING("log.ini"));
     config.configure();
     log4cplus::Logger logger   = log4cplus::Logger::getInstance("info");
-    auto              resolver = std::make_shared<ConsulResolver>("http://127.0.0.1:8500", "hatlonly-test-service", "my-service", 1, 0);
+    auto              resolver = std::make_shared<ConsulResolver>("hatlonly-test-service", "my-service", "http://127.0.0.1:8500", 1);
     resolver->SetLogger(&logger);
     int         code;
     std::string err;
