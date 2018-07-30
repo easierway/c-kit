@@ -73,6 +73,7 @@ if(NOT CURL_ROOT)
         CONFIGURE_COMMAND ./configure
             --prefix=${C_KIT_SOURCE_DIR}/third/curl/build
             --with-ssl=${OPENSSL_ROOT}
+            --disable-shared
         BUILD_COMMAND make
     )
     add_dependencies(haxx_curl openssl_openssl)
