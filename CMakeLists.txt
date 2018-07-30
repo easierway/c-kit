@@ -93,11 +93,21 @@ else()
 endif()
 
 aux_source_directory(src/util util_source)
+aux_source_directory(src/balancer balancer_source)
+set(all_source ${util_source} ${balancer_source})
+
+# library
+add_library(ckit STATIC ${all_source})
+add_dependencies(ckit third)
+
+install(TARGETS ckit DESTINATION lib)
+install(DIRECTORY ${C_KIT_SOURCE_DIR}/include DESTINATION include)
+
+# test
 add_executable(test_util ${util_source} test/util/test_util.cpp)
 add_dependencies(test_util third)
 target_link_libraries(test_util gtest curl)
 
-aux_source_directory(src/balancer balancer_source)
 add_executable(test_balancer ${balancer_source} ${util_source} test/balancer/test_balancer.cpp)
 add_dependencies(test_balancer third)
 if (APPLE)
