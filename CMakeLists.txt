@@ -115,7 +115,7 @@ add_library(ckit STATIC ${all_source})
 add_dependencies(ckit third)
 
 install(TARGETS ckit DESTINATION lib)
-install(DIRECTORY ${C_KIT_SOURCE_DIR}/include DESTINATION include)
+install(DIRECTORY ${C_KIT_SOURCE_DIR}/include DESTINATION .)
 
 # test
 if(UNITTEST)
