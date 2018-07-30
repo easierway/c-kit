@@ -1,3 +1,5 @@
+#pragma once
+
 #include <log4cplus/logger.h>
 #include <boost/thread/shared_mutex.hpp>
 #include <iostream>
