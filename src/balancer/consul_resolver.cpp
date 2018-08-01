@@ -111,14 +111,16 @@ std::tuple<int, std::string> ConsulResolver::_updateServiceZone() {
     int                                status = -1;
     std::string                        err;
     std::map<std::string, std::string> header;
-    std::tie(status, body, header, err) = HttpGet(this->address + "/v1/health/service/" + this->service + "?passing=true&index=" + this->lastIndex, std::map<std::string, std::string>{});
-    for (const auto& kv : header) {
-        std::cout << kv.first << " => " << kv.second << std::endl;
-    }
+    std::stringstream                  ss;
+    ss << this->address << "/v1/health/service/" << this->service << "?passing=true&wait=" << this->intervalS << "s&index=" << this->lastIndex;
+    std::tie(status, body, header, err) = HttpGet(ss.str(), std::map<std::string, std::string>{});
     if (status != 200) {
         return std::make_tuple(-1, "HttpGet failed. err [" + err + "]");
     }
     if (header.count("X-Consul-Index") > 0) {
+        if (this->lastIndex == header["X-Consul-Index"]) {
+            return std::make_tuple(0, "");
+        }
         this->lastIndex = header["X-Consul-Index"];
     }
     auto jsonObj = json11::Json::parse(body, err);
@@ -165,8 +167,8 @@ std::tuple<int, std::string> ConsulResolver::_updateServiceZone() {
     this->serviceUpdaterMutex.unlock();
 
     if (logger != nullptr) {
-        LOG4CPLUS_INFO(*(this->logger), "update localZone [" << this->localZone->to_json().dump() << "]");
-        LOG4CPLUS_INFO(*(this->logger), "update otherZone [" << this->otherZone->to_json().dump() << "]");
+        LOG4CPLUS_INFO(*(this->logger), "update lastIndex: [" << this->lastIndex << "], localZone: [" << this->localZone->to_json().dump() << "]");
+        LOG4CPLUS_INFO(*(this->logger), "update lastIndex: [" << this->lastIndex << "], otherZone: [" << this->otherZone->to_json().dump() << "]");
     }
 
     return std::make_tuple(0, "");
@@ -177,14 +179,16 @@ std::tuple<int, std::string> ConsulResolver::_updateFactorThreshold() {
     int                                status;
     std::string                        err;
     std::map<std::string, std::string> header;
-    std::tie(status, body, header, err) = HttpGet(this->address + "/v1/health/service/" + this->myService + "?passing=true&index=" + this->myLastIndex, std::map<std::string, std::string>{});
-    for (const auto& kv : header) {
-        std::cout << kv.first << " => " << kv.second << std::endl;
-    }
+    std::stringstream                  ss;
+    ss << this->address << "/v1/health/service/" << this->myService << "?passing=true&wait=" << this->intervalS << "s&index=" << this->myLastIndex;
+    std::tie(status, body, header, err) = HttpGet(ss.str(), std::map<std::string, std::string>{});
     if (status != 200) {
         return std::make_tuple(-1, "HttpGet failed. err [" + err + "]");
     }
     if (header.count("X-Consul-Index") > 0) {
+        if (this->myLastIndex == header["X-Consul-Index"]) {
+            return std::make_tuple(0, "");
+        }
         this->myLastIndex = header["X-Consul-Index"];
     }
     auto jsonObj = json11::Json::parse(body, err);
@@ -217,8 +221,7 @@ std::tuple<int, std::string> ConsulResolver::_updateFactorThreshold() {
     this->myServiceNum    = myServiceNum;
 
     if (logger != nullptr) {
-        LOG4CPLUS_INFO(*(this->logger), "update factorThreadhold [" << factorThreshold << "]");
-        LOG4CPLUS_INFO(*(this->logger), "update myServiceNum [" << myServiceNum << "]");
+        LOG4CPLUS_INFO(*(this->logger), "update myLastIndex: [" << this->myLastIndex << "], myServiceNum: [" << myServiceNum << "], factorThreadhold: [" << factorThreshold << "]");
     }
 
     return std::make_tuple(0, "");
