@@ -21,6 +21,8 @@ ConsulResolver::ConsulResolver(
     this->serviceRatio           = serviceRatio;
     this->cpuThreshold           = cpuThreshold;
     this->done                   = false;
+    this->lastIndex              = "0";
+    this->myLastIndex            = "0";
     this->zone                   = Zone();
     this->cpuUsage               = CPUUsage();
     this->serviceUpdater         = nullptr;
@@ -105,16 +107,19 @@ std::tuple<int, std::string> ConsulResolver::Stop() {
 }
 
 std::tuple<int, std::string> ConsulResolver::_updateServiceZone() {
-    std::string body;
-    int         status = -1;
-    std::string err;
+    std::string                        body;
+    int                                status = -1;
+    std::string                        err;
     std::map<std::string, std::string> header;
-    std::tie(status, body, header, err) = HttpGet(this->address + "/v1/health/service/" + this->service + "?passing=true&index=0", std::map<std::string, std::string>{});
+    std::tie(status, body, header, err) = HttpGet(this->address + "/v1/health/service/" + this->service + "?passing=true&index=" + this->lastIndex, std::map<std::string, std::string>{});
     for (const auto& kv : header) {
         std::cout << kv.first << " => " << kv.second << std::endl;
     }
     if (status != 200) {
         return std::make_tuple(-1, "HttpGet failed. err [" + err + "]");
+    }
+    if (header.count("X-Consul-Index") > 0) {
+        this->lastIndex = header["X-Consul-Index"];
     }
     auto jsonObj = json11::Json::parse(body, err);
     if (!err.empty()) {
@@ -168,16 +173,19 @@ std::tuple<int, std::string> ConsulResolver::_updateServiceZone() {
 }
 
 std::tuple<int, std::string> ConsulResolver::_updateFactorThreshold() {
-    std::string body;
-    int         status;
-    std::string err;
+    std::string                        body;
+    int                                status;
+    std::string                        err;
     std::map<std::string, std::string> header;
-    std::tie(status, body, header, err) = HttpGet(this->address + "/v1/health/service/" + this->myService + "?passing=true&index=0", std::map<std::string, std::string>{});
+    std::tie(status, body, header, err) = HttpGet(this->address + "/v1/health/service/" + this->myService + "?passing=true&index=" + this->myLastIndex, std::map<std::string, std::string>{});
     for (const auto& kv : header) {
         std::cout << kv.first << " => " << kv.second << std::endl;
     }
     if (status != 200) {
         return std::make_tuple(-1, "HttpGet failed. err [" + err + "]");
+    }
+    if (header.count("X-Consul-Index") > 0) {
+        this->myLastIndex = header["X-Consul-Index"];
     }
     auto jsonObj = json11::Json::parse(body, err);
     if (!err.empty()) {

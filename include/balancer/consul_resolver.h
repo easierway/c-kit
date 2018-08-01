@@ -53,7 +53,9 @@ struct ServiceZone {
 class ConsulResolver {
     std::string                  address;              // consul 地址，一般为本地 agent
     std::string                  service;              // 要访问的服务名
+    std::string                  lastIndex;            // blocking 访问 consul
     std::string                  myService;            // 本服务名
+    std::string                  myLastIndex;          // blocking 访问 consul
     std::string                  zone;                 // 服务地区
     double                       serviceRatio;         // 要访问的服务与本服务比例
     double                       cpuThreshold;         // cpu 阀值，根据 qps 预测要访问的服务 cpu，超过阀值，跨 zone 访问，[0,1]

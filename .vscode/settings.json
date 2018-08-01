@@ -29,6 +29,7 @@
         "utility": "cpp",
         "cstdio": "cpp",
         "ratio": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "memory": "cpp"
     }
 }
