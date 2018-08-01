@@ -62,6 +62,8 @@ if(NOT OPENSSL_ROOT)
     )
     add_dependencies(third openssl_openssl)
     set(OPENSSL_ROOT "${C_KIT_SOURCE_DIR}/third/openssl/build")
+else()
+    add_custom_target(openssl_openssl)
 endif()
 
 if(NOT CURL_ROOT)
