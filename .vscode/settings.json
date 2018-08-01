@@ -28,6 +28,7 @@
         "type_traits": "cpp",
         "utility": "cpp",
         "cstdio": "cpp",
-        "ratio": "cpp"
+        "ratio": "cpp",
+        "random": "cpp"
     }
 }

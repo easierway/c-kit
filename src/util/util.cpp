@@ -69,7 +69,7 @@ std::string Zone() {
 
     std::vector<std::string> kv;
     auto                     str = output.substr(0, output.length() - 1);
-    boost::split(kv, str, boost::is_any_of(" "));
+    boost::split(kv, str, [](char ch) { return ch == ' '; });
     if (kv.size() != 2) {
         return "unknown";
     }
@@ -112,4 +112,56 @@ std::tuple<int, std::string, std::string> HttpGet(const std::string &url) {
     return std::make_tuple(status, body.str(), ss.str());
 }
 
-}  // namespace kit
+std::tuple<int, std::string, std::map<std::string, std::string>, std::string> HttpGet(const std::string &url, std::map<std::string, std::string> reqheader) {
+    auto curl = curl_easy_init();
+    if (!curl) {
+        return std::make_tuple(-1, "", std::map<std::string, std::string>{}, "curl_easy_init failed");
+    }
+
+    std::stringstream  resheaderStr;
+    std::stringstream  body;
+    long               status;
+    struct curl_slist *reqheaderStr = nullptr;
+    for (const auto &kv : reqheader) {
+        reqheaderStr = curl_slist_append(reqheaderStr, (kv.first + ":" + kv.second).c_str());
+    }
+
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, reqheaderStr);
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, WriteToStream);
+    curl_easy_setopt(curl, CURLOPT_HEADERDATA, &resheaderStr);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteToStream);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &body);
+    auto code = curl_easy_perform(curl);
+    if (code != CURLE_OK) {
+        curl_slist_free_all(reqheaderStr);
+        curl_easy_cleanup(curl);
+        std::stringstream ss;
+        ss << "curl_easy_perform is not ok, code: [" << code << "] url: [" << url << "]";
+        return std::make_tuple(-1, body.str(), std::map<std::string, std::string>{}, ss.str());
+    }
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
+    std::map<std::string, std::string> resheader;
+
+    std::vector<std::string> lines;
+    auto                     str = resheaderStr.str();
+    boost::split(lines, str, [](char ch) { return ch == '\n'; });
+    for (const auto &line : lines) {
+        auto idx = line.find(":");
+        if (idx != std::string::npos) {
+            resheader[line.substr(0, idx)] = boost::trim_copy(line.substr(idx + 1));
+        }
+    }
+
+    curl_slist_free_all(reqheaderStr);
+    curl_easy_cleanup(curl);
+
+    if (status == 200) {
+        return std::make_tuple(status, body.str(), resheader, "");
+    }
+
+    std::stringstream ss;
+    ss << "curl_easy_perform is not ok, status: [" << status << "] url: [" << url << "]";
+    return std::make_tuple(status, body.str(), resheader, ss.str());
+}
+}
