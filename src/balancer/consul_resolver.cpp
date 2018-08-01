@@ -172,7 +172,7 @@ std::tuple<int, std::string> ConsulResolver::_updateFactorThreshold() {
     int         status;
     std::string err;
     std::map<std::string, std::string> header;
-    std::tie(status, body, header, err) = HttpGet(this->address + "/v1/health/service/" + this->myService + "?passing=true&index=0");
+    std::tie(status, body, header, err) = HttpGet(this->address + "/v1/health/service/" + this->myService + "?passing=true&index=0", std::map<std::string, std::string>{});
     for (const auto& kv : header) {
         std::cout << kv.first << " => " << kv.second << std::endl;
     }
