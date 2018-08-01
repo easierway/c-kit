@@ -112,6 +112,7 @@ std::tuple<int, std::string> ConsulResolver::_updateServiceZone() {
     std::string                        err;
     std::map<std::string, std::string> header;
     std::stringstream                  ss;
+    // @see https://www.consul.io/api/index.html#blocking-queries
     ss << this->address << "/v1/health/service/" << this->service << "?passing=true&wait=" << this->intervalS << "s&index=" << this->lastIndex;
     std::tie(status, body, header, err) = HttpGet(ss.str(), std::map<std::string, std::string>{});
     if (status != 200) {
@@ -180,6 +181,7 @@ std::tuple<int, std::string> ConsulResolver::_updateFactorThreshold() {
     std::string                        err;
     std::map<std::string, std::string> header;
     std::stringstream                  ss;
+    // @see https://www.consul.io/api/index.html#blocking-queries
     ss << this->address << "/v1/health/service/" << this->myService << "?passing=true&wait=" << this->intervalS << "s&index=" << this->myLastIndex;
     std::tie(status, body, header, err) = HttpGet(ss.str(), std::map<std::string, std::string>{});
     if (status != 200) {
