@@ -108,7 +108,11 @@ std::tuple<int, std::string> ConsulResolver::_updateServiceZone() {
     std::string body;
     int         status = -1;
     std::string err;
-    std::tie(status, body, err) = HttpGet(this->address + "/v1/health/service/" + this->service + "?passing=true");
+    std::map<std::string, std::string> header;
+    std::tie(status, body, header, err) = HttpGet(this->address + "/v1/health/service/" + this->service + "?passing=true&index=0", std::map<std::string, std::string>{});
+    for (const auto& kv : header) {
+        std::cout << kv.first << " => " << kv.second << std::endl;
+    }
     if (status != 200) {
         return std::make_tuple(-1, "HttpGet failed. err [" + err + "]");
     }
@@ -167,7 +171,11 @@ std::tuple<int, std::string> ConsulResolver::_updateFactorThreshold() {
     std::string body;
     int         status;
     std::string err;
-    std::tie(status, body, err) = HttpGet(this->address + "/v1/health/service/" + this->myService + "?passing=true");
+    std::map<std::string, std::string> header;
+    std::tie(status, body, header, err) = HttpGet(this->address + "/v1/health/service/" + this->myService + "?passing=true&index=0");
+    for (const auto& kv : header) {
+        std::cout << kv.first << " => " << kv.second << std::endl;
+    }
     if (status != 200) {
         return std::make_tuple(-1, "HttpGet failed. err [" + err + "]");
     }
