@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <json11.hpp>
+#include <random>
 #include "util/util.h"
 
 namespace kit {
@@ -256,7 +257,8 @@ std::shared_ptr<ServiceNode> ConsulResolver::DiscoverNode() {
         if (factorMax > factorThreshold && factorThreshold > 0) {
             factorMax = factorThreshold;
         }
-        auto factor = rand() % factorMax;
+        std::random_device rd;
+        auto               factor = rd() % factorMax;
         if (factor >= localZone->factorMax) {
             serviceZone = otherZone;
         }
