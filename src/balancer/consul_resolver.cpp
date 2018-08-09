@@ -251,20 +251,20 @@ std::shared_ptr<ServiceNode> ConsulResolver::DiscoverNode() {
         factorThreshold = int(double(factorThreshold) / this->cpuThreshold);
     }
 
-    auto serviceZone = localZone;
+    std::random_device rd;
+    auto               serviceZone = localZone;
     if (factorThreshold > localZone->factorMax || localZone->factorMax <= 0) {
         auto factorMax = otherZone->factorMax + localZone->factorMax;
         if (factorMax > factorThreshold && factorThreshold > 0) {
             factorMax = factorThreshold;
         }
-        std::random_device rd;
-        auto               factor = rd() % factorMax;
+        auto factor = rd() % factorMax;
         if (factor >= localZone->factorMax) {
             serviceZone = otherZone;
         }
     }
     auto& factors = serviceZone->factors;
-    auto  idx     = std::lower_bound(factors.begin(), factors.end(), rand() % serviceZone->factorMax) - factors.begin();
+    auto  idx     = std::lower_bound(factors.begin(), factors.end(), rd() % serviceZone->factorMax) - factors.begin();
     return serviceZone->nodes[idx];
 }
 }
