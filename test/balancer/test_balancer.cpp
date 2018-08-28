@@ -18,7 +18,9 @@ TEST(testBalancer, caseConsulResolver) {
     config.configure();
     log4cplus::Logger logger = log4cplus::Logger::getInstance("info");
 
-    auto resolver = std::make_shared<ConsulResolver>("hatlonly-test-service", "my-service", "http://127.0.0.1:8500", 1, 0, 0);
+    auto resolver = std::make_shared<ConsulResolver>(
+        "http://127.0.0.1:8500", "rs",
+        "rs/cpu_threshold.json", "rs/zone_cpu.json", "rs/machine_factor.json", 1, 1);
     resolver->SetLogger(&logger);
     int         code;
     std::string err;
@@ -45,7 +47,9 @@ TEST(testBalancer, caseConcurrency) {
     log4cplus::PropertyConfigurator config(LOG4CPLUS_C_STR_TO_TSTRING("log.ini"));
     config.configure();
     log4cplus::Logger logger   = log4cplus::Logger::getInstance("info");
-    auto              resolver = std::make_shared<ConsulResolver>("hatlonly-test-service", "my-service", "http://127.0.0.1:8500", 1);
+    auto              resolver = std::make_shared<ConsulResolver>(
+        "http://127.0.0.1:8500", "rs",
+        "rs/cpu_threshold.json", "rs/zone_cpu.json", "rs/machine_factor.json", 1, 1);
     resolver->SetLogger(&logger);
     int         code;
     std::string err;
@@ -54,7 +58,7 @@ TEST(testBalancer, caseConcurrency) {
         std::cout << code << err << std::endl;
     }
 
-    auto                                              threadNum = 100;
+    auto                                              threadNum = 20;
     std::vector<std::thread*>                         vt;
     std::vector<std::unordered_map<std::string, int>> counters(threadNum);
     auto                                              now = std::chrono::steady_clock::now();
@@ -70,6 +74,7 @@ TEST(testBalancer, caseConcurrency) {
                         counters[idx][address] = 0;
                     }
                     counters[idx][address]++;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(20));
                 }
             },
             i));
