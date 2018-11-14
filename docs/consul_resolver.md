@@ -25,7 +25,7 @@ adserver consul 上线之后有几个问题
 
 ### 负载均衡策略
 
-使用 smooth weighted round robin 算法
+使用 [smooth weighted round robin](https://github.com/nginx/nginx/commit/52327e0627f49dbda1e8db695e63a4b0af4448b1) 算法
 
 假设三台机器权重分别为 {a: 4, b: 2, c: 1}
 
@@ -49,7 +49,7 @@ adserver consul 上线之后有几个问题
 
 ### 集群负载（cpu）监测
 
-目前的版本里面也有集群负载监测的监测，但是是根据目前 as 的 cpu，去估算 as qps，进而根据权重去推算 rs 的负载，这种方式有两个问题：
+目前的版本里面也有集群负载监测，但是根据目前 as 的 cpu，去估算 as qps，进而根据权重去推算 rs 的负载，这种方式有两个问题：
 
 1. as 的权重和 rs 的权重有相关性，这种相关性使得权重的设置更加繁琐，权重不仅仅只是权重，还要兼顾 as rs 负载的比例
 2. 这种方式假设 cpu 和 qps 之间的线性关系，其实并不准确，在配置不准确的情况下，所计算出来的结果与实际情况相差很大

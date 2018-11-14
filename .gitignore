@@ -1,3 +1,5 @@
 third/
 build/
 xcode/
+.idea/
+cmake-build-debug/
