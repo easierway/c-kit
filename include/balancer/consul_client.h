@@ -36,7 +36,7 @@ class ConsulClient {
     std::string address;
 
    public:
-    ConsulClient(const std::string& address) {
+    explicit ConsulClient(const std::string& address) {
         this->address = address;
     }
 

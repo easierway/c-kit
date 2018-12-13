@@ -1,0 +1,68 @@
+[
+  {
+    "Checks": [
+      {
+        "CheckID": "serfHealth",
+        "CreateIndex": 4190079,
+        "Definition": {},
+        "ModifyIndex": 4190079,
+        "Name": "Serf Health Status",
+        "Node": "sg_adserver_online:13.228.168.182",
+        "Notes": "",
+        "Output": "Agent alive and reachable",
+        "ServiceID": "",
+        "ServiceName": "",
+        "ServiceTags": [],
+        "Status": "passing"
+      },
+      {
+        "CheckID": "service:as-172.31.5.107-9099",
+        "CreateIndex": 4190361,
+        "Definition": {},
+        "ModifyIndex": 7341880,
+        "Name": "check port",
+        "Node": "sg_adserver_online:13.228.168.182",
+        "Notes": "",
+        "Output": "TCP connect 172.31.5.107:9099: Success",
+        "ServiceID": "as-172.31.5.107-9099",
+        "ServiceName": "as",
+        "ServiceTags": [],
+        "Status": "passing"
+      }
+    ],
+    "Node": {
+      "Address": "172.31.5.107",
+      "CreateIndex": 4190079,
+      "Datacenter": "mv-sg-consul",
+      "ID": "1cbfbd6c-10ae-1dd9-922d-db9bec2417cb",
+      "Meta": {
+        "consul-network-segment": ""
+      },
+      "ModifyIndex": 4190088,
+      "Node": "sg_adserver_online:13.228.168.182",
+      "TaggedAddresses": {
+        "lan": "172.31.5.107",
+        "wan": "172.31.5.107"
+      }
+    },
+    "Service": {
+      "Address": "172.31.5.107",
+      "Connect": {
+        "Native": false,
+        "Proxy": null
+      },
+      "CreateIndex": 4190361,
+      "EnableTagOverride": false,
+      "ID": "as-172.31.5.107-9099",
+      "Meta": {
+        "balanceFactor": "2250",
+        "zone": "ap-southeast-1b"
+      },
+      "ModifyIndex": 4190361,
+      "Port": 9099,
+      "ProxyDestination": "",
+      "Service": "as",
+      "Tags": []
+    }
+  }
+]
