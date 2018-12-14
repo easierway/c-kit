@@ -15,7 +15,7 @@ namespace kit {
 
 struct ServiceZone {
     std::string                               zone;
-    int                                       cpu;
+    int                                       workload;
     std::vector<std::shared_ptr<ServiceNode>> nodes;
 
     json11::Json to_json() const {
@@ -25,7 +25,7 @@ struct ServiceZone {
         }
         return json11::Json::object{
             {"zone", this->zone},
-            {"cpu", this->cpu},
+            {"workload", this->workload},
             {"nodes", nodes},
         };
     }
@@ -66,7 +66,7 @@ class ConsulResolver {
     std::string                                                cpuThresholdKey;      // cpu 阀值，超过阀值跨 zone 访问，从 consul 中获取
     std::string                                                zoneCPUKey;           // cpu 阀值在 consul 中的 key
     std::string                                                instanceFactorKey;    // 机器权重在 consul 中的 key
-    std::string                                                tuningFactorKey;      // tuning factor
+    std::string                                                onlinelabFactorKey;   // tuning factor
     float                                                      learningRate;
     float                                                      rateThreshold;
     int                                                        intervalS;            // 服务列表更新最小间隔秒数
@@ -93,7 +93,7 @@ class ConsulResolver {
     std::tuple<int, std::string> _updateZoneCPUMap();
     std::tuple<int, std::string> _updateInstanceFactorMap();
     std::tuple<int, std::string> _updateCPUThreshold();
-    std::tuple<int, std::string> _updateTuningFactor();
+    std::tuple<int, std::string> _updateOnlinelabFactor();
     std::tuple<int, std::string> _updateCandidatePool();
     std::tuple<int, std::string> _updateAll();
 
@@ -104,7 +104,7 @@ class ConsulResolver {
         const std::string& cpuThresholdKey  = "clb/rs/cpu_threshold.json",
         const std::string& zoneCPUKey       = "clb/rs/zone_cpu.json",
         const std::string& instanceFactorKey = "clb/rs/instance_factor.json",
-        const std::string& tuningFactorKey = "clb/rs/tuning_factor.json",
+        const std::string& onlinelabFactorKey = "clb/rs/onlinelab_factor.json",
         int                intervalS        = 60,
         int                timeoutS         = 1);
 
@@ -113,8 +113,6 @@ class ConsulResolver {
     }
     std::tuple<int, std::string> Start();
     std::tuple<int, std::string> Stop();
-
-    std::shared_ptr<ServiceNode> _DiscoverNode();
     std::shared_ptr<ServiceNode> SelectedNode();
 };
 }

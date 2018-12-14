@@ -14,7 +14,7 @@ ConsulResolver::ConsulResolver(
     const std::string &cpuThresholdKey,
     const std::string &zoneCPUKey,
     const std::string &instanceFactorKey,
-    const std::string &tuningFactorKey,
+    const std::string &onlinelabFactorKey,
     int intervalS,
     int timeoutS) : client(address) {
     this->address = address;
@@ -22,7 +22,7 @@ ConsulResolver::ConsulResolver(
     this->cpuThresholdKey = cpuThresholdKey,
     this->zoneCPUKey = zoneCPUKey,
     this->instanceFactorKey = instanceFactorKey,
-    this->tuningFactorKey = tuningFactorKey,
+    this->onlinelabFactorKey = onlinelabFactorKey,
     this->intervalS = intervalS;
     this->timeoutS = timeoutS;
     this->cpuThreshold = 0;
@@ -152,24 +152,24 @@ std::tuple<int, std::string> ConsulResolver::_updateCPUThreshold() {
     return std::make_tuple(0, "");
 }
 
-
-std::tuple<int, std::string> ConsulResolver::_updateTuningFactor() {
+std::tuple<int, std::string> ConsulResolver::_updateOnlinelabFactor() {
     int status = -1;
     json11::Json kv;
     std::string err;
-    std::tie(status, kv, err) = this->client.GetKV(this->tuningFactorKey, this->timeoutS, this->lastIndex);
+    std::tie(status, kv, err) = this->client.GetKV(this->onlinelabFactorKey, this->timeoutS, this->lastIndex);
     if (status!=0) {
         return std::make_tuple(status, err);
     }
     if (!kv["rateThreshold"].is_null()) {
-        this->rateThreshold = kv["rateThreshold"].number_value();
+        this->rateThreshold = kv["rateThreshold"].int_value();
     }
     if (!kv["learningRate"].is_null()) {
-        this->learningRate = kv["learningRate"].number_value();
+        this->learningRate = kv["learningRate"].int_value();
     }
 
-    LOG4CPLUS_INFO(*(this->logger), "update rateThreshold: [" << this->rateThreshold << "]");
-    LOG4CPLUS_INFO(*(this->logger), "update learningRate: [" << this->learningRate << "]");
+    LOG4CPLUS_INFO(*(this->logger),
+                   "update rateThreshold: [" << this->rateThreshold << "]" << "update learningRate: ["
+                                             << this->learningRate << "]");
     return std::make_tuple(0, "");
 }
 
@@ -186,7 +186,7 @@ std::tuple<int, std::string> ConsulResolver::_updateServiceZone() {
     for (auto &node : nodes) {
         if (this->instanceFactorMap.count(node->instanceid)==0) {
             // TODO: default 100?
-            node->workload = 100;
+            node->workload = 50;
         } else {
             // TODO: enlarge the map content
             node->workload = this->instanceFactorMap[node->instanceid];
@@ -196,24 +196,12 @@ std::tuple<int, std::string> ConsulResolver::_updateServiceZone() {
             serviceZoneMap[node->zone]->zone = node->zone;
             if (this->zoneCPUMap.count(node->zone)==0) {
                 // TODO: default 100?
-                serviceZoneMap[node->zone]->cpu = 100;
+                serviceZoneMap[node->zone]->workload = 50;
             } else {
-                serviceZoneMap[node->zone]->cpu = this->zoneCPUMap[node->zone];
+                serviceZoneMap[node->zone]->workload = this->zoneCPUMap[node->zone];
             }
-            /*
-            serviceZoneMap[node->zone]->zoneFactor = 0;
-            serviceZoneMap[node->zone]->zoneWeight = 0;
-            serviceZoneMap[node->zone]->idleZoneFactor = 0;
-            serviceZoneMap[node->zone]->factorSum = 0;
-             */
         }
         serviceZoneMap[node->zone]->nodes.emplace_back(node);
-        /*
-        serviceZoneMap[node->zone]->factors.emplace_back(node->balanceFactor);
-        serviceZoneMap[node->zone]->weights.emplace_back(0);
-        serviceZoneMap[node->zone]->factorSum += node->balanceFactor;
-
-         */
     }
 
     auto serviceZones = std::make_shared<std::vector<std::shared_ptr<ServiceZone>>>();
@@ -289,23 +277,23 @@ std::tuple<int, std::string> ConsulResolver::_updateCandidatePool() {
                 candidatePool->weights.emplace_back(0);
 
                 auto balanceFactor = node->balanceFactor;
-                if (abs(node->workload - serviceZone->cpu) > this->rateThreshold) {
-                    balanceFactor += balanceFactor*(node->workload - serviceZone->cpu)/100*this->learningRate;
+                if (abs(node->workload - serviceZone->workload) > this->rateThreshold) {
+                    balanceFactor += balanceFactor*(node->workload - serviceZone->workload)/100*this->learningRate;
                 }
                 candidatePool->factors.emplace_back(balanceFactor);
                 candidatePool->factorSum += balanceFactor;
             }
         } else if (localZone->nodes.empty()
-            || localZone->cpu > this->cpuThreshold && localZone->cpu > serviceZone->cpu) {
+            || localZone->workload > this->cpuThreshold && localZone->workload > serviceZone->workload) {
             for (auto &node: serviceZone->nodes) {
                 candidatePool->nodes.emplace_back(node);
                 candidatePool->weights.emplace_back(0);
 
                 auto balanceFactor = node->balanceFactor;
                 // TODO: cross zone adjust
-                balanceFactor = balanceFactor*(localZone->cpu - serviceZone->cpu)/100;
-                if (abs(node->workload - serviceZone->cpu) > this->rateThreshold) {
-                    balanceFactor += balanceFactor*(node->workload - serviceZone->cpu)/100*this->learningRate;
+                balanceFactor = balanceFactor*(localZone->workload - serviceZone->workload)/100;
+                if (abs(node->workload - serviceZone->workload) > this->rateThreshold) {
+                    balanceFactor += balanceFactor*(node->workload - serviceZone->workload)/100*this->learningRate;
                 }
                 candidatePool->factors.emplace_back(balanceFactor);
                 candidatePool->factorSum += balanceFactor;
