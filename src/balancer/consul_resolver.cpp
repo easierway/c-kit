@@ -257,10 +257,9 @@ std::tuple<int, std::string> ConsulResolver::_updateServiceZone() {
         }
     }
 */
-    this->serviceUpdaterMutex.lock();
     this->serviceZones = serviceZones;
     this->localZone = localZone;
-    this->serviceUpdaterMutex.unlock();
+    this->_updateCandidatePool();
 
     return std::make_tuple(0, "");
 }
@@ -300,13 +299,16 @@ std::tuple<int, std::string> ConsulResolver::_updateCandidatePool() {
         }
     }
 
-    // TODO: lock methods?
+    this->serviceUpdaterMutex.lock();
     this->candidatePool = candidatePool;
+    this->serviceUpdaterMutex.unlock();
     return std::make_tuple(0, "");
 }
 
 std::shared_ptr<ServiceNode> ConsulResolver::SelectedNode() {
+    this->serviceUpdaterMutex.lock_shared();
     auto candidatePool = this->candidatePool;
+    this->serviceUpdaterMutex.unlock_shared();
     std::lock_guard<std::mutex> lock_guard(this->discoverMutex);
 
     int idx = 0, max = 0;
