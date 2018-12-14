@@ -20,7 +20,7 @@ TEST(testBalancer, caseConsulResolver) {
 
     auto resolver = std::make_shared<ConsulResolver>(
         "http://127.0.0.1:8500", "rs",
-        "rs/cpu_threshold.json", "rs/zone_cpu.json", "rs/machine_factor.json", 1, 1);
+        "rs/cpu_threshold.json", "rs/zone_cpu.json", "rs/instance_factor.json", 1, 1);
     resolver->SetLogger(&logger);
     int         code;
     std::string err;
@@ -49,7 +49,7 @@ TEST(testBalancer, caseConcurrency) {
     log4cplus::Logger logger   = log4cplus::Logger::getInstance("info");
     auto              resolver = std::make_shared<ConsulResolver>(
         "http://127.0.0.1:8500", "rs",
-        "rs/cpu_threshold.json", "rs/zone_cpu.json", "rs/machine_factor.json", 1, 1);
+        "rs/cpu_threshold.json", "rs/zone_cpu.json", "rs/instance_factor.json", 1, 1);
     resolver->SetLogger(&logger);
     int         code;
     std::string err;

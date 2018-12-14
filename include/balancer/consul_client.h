@@ -11,9 +11,11 @@ namespace kit {
 struct ServiceNode {
     std::string host;
     std::string zone;
-    std::string machine;
-    int         port;
-    int         balanceFactor;
+    // TODO: change to instanceid
+    std::string instanceid;
+    int port;
+    int balanceFactor;
+    int workload;
 
     std::string Address() {
         std::stringstream ss;
@@ -26,8 +28,9 @@ struct ServiceNode {
             {"host", this->host},
             {"port", this->port},
             {"zone", this->zone},
-            {"machine", this->machine},
+            {"instanceid", this->instanceid},
             {"balancerFactor", this->balanceFactor},
+            {"workload", this->workload},
         };
     }
 };
@@ -35,12 +38,14 @@ struct ServiceNode {
 class ConsulClient {
     std::string address;
 
-   public:
-    explicit ConsulClient(const std::string& address) {
+public:
+    explicit ConsulClient(const std::string &address) {
         this->address = address;
     }
 
-    std::tuple<int, std::vector<std::shared_ptr<ServiceNode>>, std::string> GetService(const std::string& serviceName, int timeoutS, std::string& lastIndex);
-    std::tuple<int, json11::Json, std::string>                              GetKV(const std::string& path, int timeoutS, std::string& lastIndex);
+    std::tuple<int, std::vector<std::shared_ptr<ServiceNode>>, std::string> GetService(const std::string &serviceName,
+                                                                                       int timeoutS,
+                                                                                       std::string &lastIndex);
+    std::tuple<int, json11::Json, std::string> GetKV(const std::string &path, int timeoutS, std::string &lastIndex);
 };
 }
