@@ -167,9 +167,8 @@ std::tuple<int, std::string> ConsulResolver::_updateOnlinelabFactor() {
         this->learningRate = kv["learningRate"].int_value();
     }
 
-    LOG4CPLUS_INFO(*(this->logger),
-                   "update rateThreshold: [" << this->rateThreshold << "]" << "update learningRate: ["
-                                             << this->learningRate << "]");
+    LOG4CPLUS_INFO(*(this->logger), "update rateThreshold: [" << this->rateThreshold << "]");
+    LOG4CPLUS_INFO(*(this->logger), "update learningRate: [" << this->learningRate << "]");
     return std::make_tuple(0, "");
 }
 

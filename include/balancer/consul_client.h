@@ -11,7 +11,6 @@ namespace kit {
 struct ServiceNode {
     std::string host;
     std::string zone;
-    // TODO: change to instanceid
     std::string instanceid;
     int port;
     int balanceFactor;
