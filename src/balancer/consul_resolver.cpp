@@ -82,6 +82,10 @@ std::tuple<int, std::string> ConsulResolver::_updateAll() {
     if (code!=0 && this->logger!=nullptr) {
         LOG4CPLUS_WARN(*(this->logger), "update zoneCPUMap failed. code: [" << code << "], err: [" << err << "]");
     }
+    std::tie(code, err) = this->_updateOnlinelabFactor();
+    if (code!=0 && this->logger!=nullptr) {
+        LOG4CPLUS_WARN(*(this->logger), "update onlinelabFactor failed. code: [" << code << "], err: [" << err << "]");
+    }
     std::tie(code, err) = this->_updateInstanceFactorMap();
     if (code!=0 && this->logger!=nullptr) {
         LOG4CPLUS_WARN(*(this->logger),
@@ -267,6 +271,7 @@ std::tuple<int, std::string> ConsulResolver::_updateServiceZone() {
 std::tuple<int, std::string> ConsulResolver::_updateCandidatePool() {
     auto localZone = this->localZone;
     auto serviceZones = this->serviceZones;
+    auto &balanceFactorCache = this->balanceFactorCache;
     auto candidatePool = std::make_shared<CandidatePool>();
     for (auto &serviceZone : *serviceZones) {
         if (localZone->zone==serviceZone->zone) {
@@ -275,6 +280,9 @@ std::tuple<int, std::string> ConsulResolver::_updateCandidatePool() {
                 candidatePool->weights.emplace_back(0);
 
                 auto balanceFactor = node->balanceFactor;
+                if(balanceFactorCache.count(node->instanceid) > 0) {
+                    balanceFactor = balanceFactorCache[node->instanceid];
+                }
                 if (abs(node->workload - serviceZone->workload) > this->rateThreshold) {
                     balanceFactor += balanceFactor*(node->workload - serviceZone->workload)/100*this->learningRate;
                 }
@@ -288,8 +296,11 @@ std::tuple<int, std::string> ConsulResolver::_updateCandidatePool() {
                 candidatePool->weights.emplace_back(0);
 
                 auto balanceFactor = node->balanceFactor;
+                if(balanceFactorCache.count(node->instanceid) > 0) {
+                    balanceFactor = balanceFactorCache[node->instanceid];
+                }
                 // TODO: cross zone adjust
-                balanceFactor = balanceFactor*(localZone->workload - serviceZone->workload)/100;
+//                balanceFactor = balanceFactor*(localZone->workload - serviceZone->workload)/100;
                 if (abs(node->workload - serviceZone->workload) > this->rateThreshold) {
                     balanceFactor += balanceFactor*(node->workload - serviceZone->workload)/100*this->learningRate;
                 }
