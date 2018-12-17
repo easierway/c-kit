@@ -96,6 +96,7 @@ link_directories(
     "${CURL_ROOT}/lib"
     "${JSON11_ROOT}/lib"
     "${LOG4CPLUS_ROOT}/lib"
+    "${C_KIT_SOURCE_DIR}/../third-lib/openssl-OpenSSL_1_0_2o/lib"
 )
 
 if(APPLE)
@@ -114,26 +115,27 @@ add_library(ckit STATIC ${all_source})
 install(TARGETS ckit DESTINATION lib)
 install(DIRECTORY ${C_KIT_SOURCE_DIR}/include DESTINATION .)
 
+set(UNITTEST 1)
+
 # test
 if(UNITTEST)
     add_executable(test_util ${util_source} test/util/test_util.cpp)
-    add_dependencies(test_util third)
-    target_link_libraries(test_util gtest curl)
+    target_link_libraries(test_util gtest curl ssl crypto z dl)
 
-    add_executable(test_balancer ${balancer_source} ${util_source} test/balancer/test_balancer.cpp)
-    add_dependencies(test_balancer third)
-    if (APPLE)
-        target_link_libraries(test_balancer gtest curl json11 boost_system boost_thread log4cplus)
-    else()
-        target_link_libraries(test_balancer gtest curl json11 boost_system boost_thread log4cplusS)
-    endif()
-    add_custom_command(
-        TARGET test_balancer
-        POST_BUILD
-        COMMAND cp ${C_KIT_SOURCE_DIR}/configs/log.ini ${C_KIT_BINARY_DIR}
-    )
+    #add_executable(test_balancer ${balancer_source} ${util_source} test/balancer/test_balancer.cpp)
+    #add_dependencies(test_balancer third)
+    #if (APPLE)
+    #    target_link_libraries(test_balancer gtest curl json11 boost_system boost_thread log4cplus)
+    #else()
+    #    target_link_libraries(test_balancer gtest curl json11 boost_system boost_thread log4cplusS)
+    #endif()
+    #add_custom_command(
+    #    TARGET test_balancer
+    #    POST_BUILD
+    #    COMMAND cp ${C_KIT_SOURCE_DIR}/configs/log.ini ${C_KIT_BINARY_DIR}
+    #)
 
     enable_testing()
-    add_test(NAME test_balancer COMMAND test_balancer)
+    add_test(NAME test_util COMMAND test_util)
 endif()
 
