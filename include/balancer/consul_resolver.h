@@ -9,47 +9,10 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
+
 #include "consul_client.h"
 
 namespace kit {
-
-struct ServiceZone {
-    std::string                               zone;
-    int                                       workload;
-    std::vector<std::shared_ptr<ServiceNode>> nodes;
-
-    json11::Json to_json() const {
-        std::vector<ServiceNode> nodes(this->nodes.size());
-        for (int i = 0; i < this->nodes.size(); i++) {
-            nodes[i] = *(this->nodes[i]);
-        }
-        return json11::Json::object{
-            {"zone", this->zone},
-            {"workload", this->workload},
-            {"nodes", nodes},
-        };
-    }
-};
-
-struct CandidatePool {
-    std::vector<std::shared_ptr<ServiceNode>> nodes;
-    std::vector<int32_t> factors;
-    std::vector<int32_t> weights;
-    int32_t factorSum;
-
-    json11::Json to_json() const {
-        std::vector<ServiceNode> nodes(this->nodes.size());
-        for (int i = 0; i < this->nodes.size(); i++) {
-            nodes[i] = *(this->nodes[i]);
-        }
-        return json11::Json::object{
-            {"nodes", nodes},
-            {"factors", this->factors},
-            {"factorSum", this->factorSum},
-            {"weights", this->weights},
-        };
-    }
-};
 
 class ConsulResolver {
     ConsulClient                                               client;

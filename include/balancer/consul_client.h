@@ -6,33 +6,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include "consul_node.h"
+
 namespace kit {
-
-struct ServiceNode {
-    std::string host;
-    std::string instanceid;
-    std::string zone;
-    int balanceFactor;
-    int port;
-    int workload;
-
-    std::string Address() {
-        std::stringstream ss;
-        ss << this->host << ":" << this->port;
-        return ss.str();
-    }
-
-    json11::Json to_json() const {
-        return json11::Json::object{
-            {"host", this->host},
-            {"port", this->port},
-            {"zone", this->zone},
-            {"instanceid", this->instanceid},
-            {"balancerFactor", this->balanceFactor},
-            {"workload", this->workload},
-        };
-    }
-};
 
 class ConsulClient {
     std::string address;
