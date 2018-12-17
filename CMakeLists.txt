@@ -107,7 +107,7 @@ SET(C_KIT_SRC ${util_source} ${balancer_source})
 ENABLE_TESTING()
 
 # library
-add_library(ckit STATIC ${all_source})
+add_library(ckit STATIC ${C_KIT_SRC})
 
 install(TARGETS ckit DESTINATION lib)
 install(DIRECTORY ${C_KIT_SOURCE_DIR}/include DESTINATION .)
