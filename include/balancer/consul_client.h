@@ -10,10 +10,10 @@ namespace kit {
 
 struct ServiceNode {
     std::string host;
-    std::string zone;
     std::string instanceid;
-    int port;
+    std::string zone;
     int balanceFactor;
+    int port;
     int workload;
 
     std::string Address() {
@@ -42,6 +42,7 @@ public:
         this->address = address;
     }
 
+    // TODO: making lastIndex working, for now useless
     std::tuple<int, std::vector<std::shared_ptr<ServiceNode>>, std::string> GetService(const std::string &serviceName,
                                                                                        int timeoutS,
                                                                                        std::string &lastIndex);
