@@ -9,9 +9,9 @@ add_executable(test_consul_client balancer/test_consul_client.cpp)
 target_link_libraries(test_consul_client ${TEST_NEEDED_LIBS})
 add_test(test_consul_client test_consul_client)
 
-add_executable(test_consul_balancer balancer/test_consul_balancer.cpp)
-target_link_libraries(test_consul_balancer ${TEST_NEEDED_LIBS})
-add_test(test_consul_balancer test_consul_balancer)
+add_executable(test_consul_resolver balancer/test_consul_resolver.cpp)
+target_link_libraries(test_consul_resolver ${TEST_NEEDED_LIBS})
+add_test(test_consul_resolver test_consul_resolver)
 
 #if(UNITTEST)
 #    add_executable(test_util ${util_source} test/util/test_util.cpp)

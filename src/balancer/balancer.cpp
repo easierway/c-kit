@@ -26,32 +26,72 @@ ConsulResolver::ConsulResolver(
     this->intervalS = intervalS;
     this->timeoutS = timeoutS;
     this->cpuThreshold = 0;
+    this->done = false;
     this->lastIndex = "0";
     this->zone = Zone();
+    this->serviceUpdater = nullptr;
     this->logger = nullptr;
 }
 
-std::tuple<int, std::string> ConsulResolver::updateAll() {
+std::tuple<int, std::string> ConsulResolver::Start() {
+    std::string err;
+    int code;
+    std::tie(code, err) = this->_updateAll();
+    if (code!=0) {
+        return std::make_tuple(code, err);
+    }
+
+    this->serviceUpdater = new std::thread([&]() {
+        while (!this->done) {
+            this->_updateAll();
+            std::this_thread::sleep_for(std::chrono::seconds(this->intervalS));
+        }
+    });
+
+    if (logger!=nullptr) {
+        LOG4CPLUS_INFO(*(this->logger), "consul resolver start " << this->to_json().dump());
+    }
+
+    return std::make_tuple(0, "");
+}
+
+std::tuple<int, std::string> ConsulResolver::Stop() {
+    this->done = true;
+
+    for (const auto &t : {this->serviceUpdater}) {
+        if (t!=nullptr) {
+            if (t->joinable()) {
+                t->join();
+            }
+            delete t;
+        }
+    }
+    this->serviceUpdater = nullptr;
+
+    return std::make_tuple(0, "");
+}
+
+std::tuple<int, std::string> ConsulResolver::_updateAll() {
     int code;
     std::string err;
-    std::tie(code, err) = this->updateCPUThreshold();
+    std::tie(code, err) = this->_updateCPUThreshold();
     if (code!=0 && this->logger!=nullptr) {
         LOG4CPLUS_WARN(*(this->logger), "update CPU threshold failed. code: [" << code << "], err: [" << err << "]");
     }
-    std::tie(code, err) = this->updateZoneCPUMap();
+    std::tie(code, err) = this->_updateZoneCPUMap();
     if (code!=0 && this->logger!=nullptr) {
         LOG4CPLUS_WARN(*(this->logger), "update zoneCPUMap failed. code: [" << code << "], err: [" << err << "]");
     }
-    std::tie(code, err) = this->updateOnlinelabFactor();
+    std::tie(code, err) = this->_updateOnlinelabFactor();
     if (code!=0 && this->logger!=nullptr) {
         LOG4CPLUS_WARN(*(this->logger), "update onlinelabFactor failed. code: [" << code << "], err: [" << err << "]");
     }
-    std::tie(code, err) = this->updateInstanceFactorMap();
+    std::tie(code, err) = this->_updateInstanceFactorMap();
     if (code!=0 && this->logger!=nullptr) {
         LOG4CPLUS_WARN(*(this->logger),
                        "update instanceFactorMap failed. code: [" << code << "], err: [" << err << "]");
     }
-    std::tie(code, err) = this->updateServiceZone();
+    std::tie(code, err) = this->_updateServiceZone();
     if (code!=0 && this->logger!=nullptr) {
         LOG4CPLUS_WARN(*(this->logger), "update serviceZone failed. code: [" << code << "], err: [" << err << "]");
         return std::make_tuple(code, err);
@@ -59,7 +99,7 @@ std::tuple<int, std::string> ConsulResolver::updateAll() {
     return std::make_tuple(0, "");
 }
 
-std::tuple<int, std::string> ConsulResolver::updateZoneCPUMap() {
+std::tuple<int, std::string> ConsulResolver::_updateZoneCPUMap() {
     int status = -1;
     json11::Json kv;
     std::string err;
@@ -79,7 +119,7 @@ std::tuple<int, std::string> ConsulResolver::updateZoneCPUMap() {
     return std::make_tuple(0, "");
 }
 
-std::tuple<int, std::string> ConsulResolver::updateInstanceFactorMap() {
+std::tuple<int, std::string> ConsulResolver::_updateInstanceFactorMap() {
     int status = -1;
     json11::Json kv;
     std::string err;
@@ -100,7 +140,7 @@ std::tuple<int, std::string> ConsulResolver::updateInstanceFactorMap() {
     return std::make_tuple(0, "");
 }
 
-std::tuple<int, std::string> ConsulResolver::updateCPUThreshold() {
+std::tuple<int, std::string> ConsulResolver::_updateCPUThreshold() {
     int status = -1;
     json11::Json kv;
     std::string err;
@@ -116,7 +156,7 @@ std::tuple<int, std::string> ConsulResolver::updateCPUThreshold() {
     return std::make_tuple(0, "");
 }
 
-std::tuple<int, std::string> ConsulResolver::updateOnlinelabFactor() {
+std::tuple<int, std::string> ConsulResolver::_updateOnlinelabFactor() {
     int status = -1;
     json11::Json kv;
     std::string err;
@@ -136,7 +176,7 @@ std::tuple<int, std::string> ConsulResolver::updateOnlinelabFactor() {
     return std::make_tuple(0, "");
 }
 
-std::tuple<int, std::string> ConsulResolver::updateServiceZone() {
+std::tuple<int, std::string> ConsulResolver::_updateServiceZone() {
     int status = -1;
     std::vector<std::shared_ptr<ServiceNode>> nodes;
     std::string err;
@@ -223,12 +263,12 @@ std::tuple<int, std::string> ConsulResolver::updateServiceZone() {
 */
     this->serviceZones = serviceZones;
     this->localZone = localZone;
-    this->updateCandidatePool();
+    this->_updateCandidatePool();
 
     return std::make_tuple(0, "");
 }
 
-std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
+std::tuple<int, std::string> ConsulResolver::_updateCandidatePool() {
     auto localZone = this->localZone;
     auto serviceZones = this->serviceZones;
     auto &balanceFactorCache = this->balanceFactorCache;
@@ -276,7 +316,6 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
     return std::make_tuple(0, "");
 }
 
-
 std::shared_ptr<ServiceNode> ConsulResolver::SelectedNode() {
     this->serviceUpdaterMutex.lock_shared();
     auto candidatePool = this->candidatePool;
@@ -296,4 +335,38 @@ std::shared_ptr<ServiceNode> ConsulResolver::SelectedNode() {
     return candidatePool->nodes[idx];
 }
 
+/*
+std::shared_ptr<ServiceNode> ConsulResolver::_DiscoverNode() {
+    this->serviceUpdaterMutex.lock_shared();
+    auto serviceZones = this->serviceZones;
+    auto localZone = this->localZone;
+    auto zoneFactorSum = this->zoneFactorSum;
+    this->serviceUpdaterMutex.unlock_shared();
+
+    std::lock_guard<std::mutex> lock_guard(this->discoverMutex);
+    int max = 0;
+    auto serviceZone = localZone;
+    for (int i = 0; i < serviceZones->size(); i++) {
+        (*serviceZones)[i]->zoneWeight += (*serviceZones)[i]->zoneFactor;
+        if (max < (*serviceZones)[i]->zoneWeight) {
+            max = (*serviceZones)[i]->zoneWeight;
+            serviceZone = (*serviceZones)[i];
+        }
+    }
+    serviceZone->zoneWeight -= zoneFactorSum;
+
+    int idx = 0;
+    max = 0;
+    for (int i = 0; i < serviceZone->factors.size(); i++) {
+        serviceZone->weights[i] += serviceZone->factors[i];
+        if (max < serviceZone->weights[i]) {
+            max = serviceZone->weights[i];
+            idx = i;
+        }
+    }
+    serviceZone->weights[idx] -= serviceZone->factorSum;
+
+    return serviceZone->nodes[idx];
+}
+ */
 }

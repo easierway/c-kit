@@ -17,17 +17,17 @@ int main(int argc, char *argv[]) {
 
 namespace kit {
 
-TEST(testBalancer, caseConsulResolver) {
-//    log4cplus::PropertyConfigurator config(LOG4CPLUS_C_STR_TO_TSTRING("log.ini"));
-//    config.configure();
-//    log4cplus::Logger logger = log4cplus::Logger::getInstance("info");
-//
-//    auto resolver = std::make_shared<ConsulResolver>(
-//        "http://sg-consul.mobvista.com:8500", "rs",
-//        "rs/cpu_threshold.json", "rs/zone_cpu.json", "rs/instance_factor.json", 15, 10);
-//    resolver->SetLogger(&logger);
-//    int code;
-//    std::string err;
+TEST(testResolver, caseUpdate) {
+    log4cplus::Logger logger = log4cplus::Logger::getInstance("info");
+
+    auto resolver = std::make_shared<ConsulResolver>(
+        "http://sg-consul.mobvista.com:8500", "rs",
+        "rs/cpu_threshold.json", "rs/zone_cpu.json", "rs/instance_factor.json", "clb/rs/onlinelab_factor.json", 15, 10);
+    resolver->SetLogger(&logger);
+    int code;
+    std::string err;
+
+
 //    std::tie(code, err) = resolver->Start();
 //    if (code!=0) {
 //        std::cout << code << err << std::endl;
@@ -47,7 +47,7 @@ TEST(testBalancer, caseConsulResolver) {
 //    resolver->Stop();
 }
 
-TEST(testBalancer, caseConcurrency) {
+TEST(testResolver, caseConcurrency) {
 //    log4cplus::Logger logger = log4cplus::Logger::getInstance("test");
 //    auto resolver = std::make_shared<ConsulResolver>(
 //        "http://sg-consul.mobvista.com:8500", "rs",

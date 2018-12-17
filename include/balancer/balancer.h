@@ -40,6 +40,7 @@ class ConsulResolver {
 
     int                                                        intervalS;            // 服务列表更新最小间隔秒数
     int                                                        timeoutS;             // 访问 consul 超时时间
+    bool                                                       done;                 // 退出标记
     boost::shared_mutex                                        serviceUpdaterMutex;  // 服务更新锁
     std::mutex                                                 discoverMutex;        // 阻塞调用 DiscoverNode
     log4cplus::Logger*                                         logger;               // 日志
@@ -55,14 +56,15 @@ class ConsulResolver {
         };
     }
 
-    std::tuple<int, std::string> updateCPUThreshold();
-    std::tuple<int, std::string> updateZoneCPUMap();
-    std::tuple<int, std::string> updateInstanceFactorMap();
-    std::tuple<int, std::string> updateOnlinelabFactor();
-    std::tuple<int, std::string> updateServiceZone();
-    std::tuple<int, std::string> updateCandidatePool();
-    std::tuple<int, std::string> updateAll();
+    std::thread* serviceUpdater;
 
+    std::tuple<int, std::string> _updateCPUThreshold();
+    std::tuple<int, std::string> _updateZoneCPUMap();
+    std::tuple<int, std::string> _updateInstanceFactorMap();
+    std::tuple<int, std::string> _updateOnlinelabFactor();
+    std::tuple<int, std::string> _updateServiceZone();
+    std::tuple<int, std::string> _updateCandidatePool();
+    std::tuple<int, std::string> _updateAll();
 
    public:
     ConsulResolver(
@@ -78,6 +80,8 @@ class ConsulResolver {
     void SetLogger(log4cplus::Logger* logger) {
         this->logger = logger;
     }
+    std::tuple<int, std::string> Start();
+    std::tuple<int, std::string> Stop();
     std::shared_ptr<ServiceNode> SelectedNode();
 };
 }
