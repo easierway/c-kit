@@ -5,6 +5,7 @@
 #include <json11.hpp>
 #include <random>
 #include "util/util.h"
+#include "util/constant.h"
 
 namespace kit {
 
@@ -68,15 +69,21 @@ std::tuple<int, std::string> ConsulResolver::updateZoneCPUMap() {
         return std::make_tuple(status, err);
     }
 
-    auto zoneCPUMap = std::unordered_map<std::string, int>();
-    for (const auto &item : kv.object_items()) {
-        zoneCPUMap[item.first] = item.second.int_value();
+    if (kv["data"].is_null()) {
+        return std::make_tuple(STATUSCODE::ERROR_CONSUL_VALUE, "no data key, please check zone cpu map");
+    }
+
+    auto zoneCPUMap = std::unordered_map<std::string, double>();
+    for (const auto &item : kv["data"].array_items()) {
+        for (const auto &zone: item.object_items()) {
+            zoneCPUMap[zone.first] = zone.second.number_value();
+        }
     }
 
     this->zoneCPUMap = zoneCPUMap;
 
     LOG4CPLUS_INFO(*(this->logger), "update zoneCPUMap: [" << json11::Json(this->zoneCPUMap).dump() << "]");
-    return std::make_tuple(0, "");
+    return std::make_tuple(STATUSCODE::SUCCESS, "");
 }
 
 std::tuple<int, std::string> ConsulResolver::updateInstanceFactorMap() {
@@ -84,13 +91,16 @@ std::tuple<int, std::string> ConsulResolver::updateInstanceFactorMap() {
     json11::Json kv;
     std::string err;
     std::tie(status, kv, err) = this->client.GetKV(this->instanceFactorKey, this->timeoutS, this->lastIndex);
-    if (status!=0) {
+    if (status!=STATUSCODE::SUCCESS) {
         return std::make_tuple(status, err);
     }
-    auto instanceFactorMap = std::unordered_map<std::string, int>();
+    if (kv["data"].is_null()) {
+        return std::make_tuple(STATUSCODE::ERROR_CONSUL_VALUE, "no data key, please check instance factor");
+    }
+    auto instanceFactorMap = std::unordered_map<std::string, double>();
     // TODO: enlarge the content
     for (const auto &item : kv["data"].array_items()) {
-        instanceFactorMap[item["instanceid"].string_value()] = item["CPUUtilization"].int_value();
+        instanceFactorMap[item["instanceid"].string_value()] = item["CPUUtilization"].number_value();
     }
 
     this->instanceFactorMap = instanceFactorMap;
@@ -106,13 +116,13 @@ std::tuple<int, std::string> ConsulResolver::updateCPUThreshold() {
     std::string err;
     std::tie(status, kv, err) = this->client.GetKV(this->cpuThresholdKey, this->timeoutS, this->lastIndex);
     if (status!=0) {
+        LOG4CPLUS_INFO(*(this->logger), "update cpuThreshold: [" << this->cpuThreshold << "]");
         return std::make_tuple(status, err);
     }
     if (!kv["cpuThreshold"].is_null()) {
         this->cpuThreshold = kv["cpuThreshold"].int_value();
     }
 
-    LOG4CPLUS_INFO(*(this->logger), "update cpuThreshold: [" << this->cpuThreshold << "]");
     return std::make_tuple(0, "");
 }
 
@@ -122,17 +132,16 @@ std::tuple<int, std::string> ConsulResolver::updateOnlinelabFactor() {
     std::string err;
     std::tie(status, kv, err) = this->client.GetKV(this->onlinelabFactorKey, this->timeoutS, this->lastIndex);
     if (status!=0) {
+        LOG4CPLUS_ERROR(*(this->logger), "update OnlinelabFactor [" << this->onlinelabFactorKey << "] failed. " << err);
         return std::make_tuple(status, err);
     }
     if (!kv["rateThreshold"].is_null()) {
-        this->rateThreshold = kv["rateThreshold"].int_value();
+        this->rateThreshold = kv["rateThreshold"].number_value();
     }
     if (!kv["learningRate"].is_null()) {
-        this->learningRate = kv["learningRate"].int_value();
+        this->learningRate = kv["learningRate"].number_value();
     }
 
-    LOG4CPLUS_INFO(*(this->logger), "update rateThreshold: [" << this->rateThreshold << "]");
-    LOG4CPLUS_INFO(*(this->logger), "update learningRate: [" << this->learningRate << "]");
     return std::make_tuple(0, "");
 }
 
@@ -240,7 +249,7 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 candidatePool->weights.emplace_back(0);
 
                 auto balanceFactor = node->balanceFactor;
-                if(balanceFactorCache.count(node->instanceid) > 0) {
+                if (balanceFactorCache.count(node->instanceid) > 0) {
                     balanceFactor = balanceFactorCache[node->instanceid];
                 }
                 if (abs(node->workload - serviceZone->workload) > this->rateThreshold) {
@@ -256,7 +265,7 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 candidatePool->weights.emplace_back(0);
 
                 auto balanceFactor = node->balanceFactor;
-                if(balanceFactorCache.count(node->instanceid) > 0) {
+                if (balanceFactorCache.count(node->instanceid) > 0) {
                     balanceFactor = balanceFactorCache[node->instanceid];
                 }
                 // TODO: cross zone adjust
@@ -275,7 +284,6 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
     this->serviceUpdaterMutex.unlock();
     return std::make_tuple(0, "");
 }
-
 
 std::shared_ptr<ServiceNode> ConsulResolver::SelectedNode() {
     this->serviceUpdaterMutex.lock_shared();

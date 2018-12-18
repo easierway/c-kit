@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <log4cplus/configurator.h>
+#include <log4cplus/loggingmacros.h>
 #include <unordered_map>
 
 #include "balancer/consul_resolver.h"
@@ -18,15 +19,37 @@ int main(int argc, char *argv[]) {
 namespace kit {
 
 TEST(testResolver, caseUpdate) {
-    log4cplus::Logger logger = log4cplus::Logger::getInstance("info");
-
+    log4cplus::Logger logger = log4cplus::Logger::getInstance("test");
     auto resolver = std::make_shared<ConsulResolver>(
-        "http://sg-consul.mobvista.com:8500", "rs",
-        "rs/cpu_threshold.json", "rs/zone_cpu.json", "rs/instance_factor.json", "clb/rs/onlinelab_factor.json", 15, 10);
+        "http://sg-consul.mobvista.com:8500",
+        "rs",
+        "clb/rs/cpu_threshold.json",
+        "clb/rs/zone_cpu.json",
+        "clb/rs/instance_factor.json",
+        "clb/rs/onlinelab_factor.json",
+        15,
+        10);
     resolver->SetLogger(&logger);
     int code;
     std::string err;
 
+    std::tie(code, err) = resolver->updateZoneCPUMap();
+    GTEST_ASSERT_EQ(0, code);
+    GTEST_ASSERT_EQ("", err);
+
+    std::tie(code, err) = resolver->updateCPUThreshold();
+    GTEST_ASSERT_EQ(0, code);
+    GTEST_ASSERT_EQ("", err);
+
+    std::tie(code, err) = resolver->updateOnlinelabFactor();
+    GTEST_ASSERT_EQ(0, code);
+    GTEST_ASSERT_EQ("", err);
+
+    std::tie(code, err) = resolver->updateInstanceFactorMap();
+    GTEST_ASSERT_EQ(0, code);
+    GTEST_ASSERT_EQ("", err);
+
+    LOG4CPLUS_DEBUG(logger, "resolver: [" << resolver->to_json().dump() << "]");
 
 //    std::tie(code, err) = resolver->Start();
 //    if (code!=0) {

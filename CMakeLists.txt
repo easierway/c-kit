@@ -101,7 +101,7 @@ link_directories(
 
 aux_source_directory(${C_KIT_SOURCE_DIR}/src/util util_source)
 aux_source_directory(${C_KIT_SOURCE_DIR}/src/balancer balancer_source)
-SET(C_KIT_SRC ${util_source} ${balancer_source})
+SET(C_KIT_SRC ${util_source} ${balancer_source} include/util/constant.h)
 
 # enable test
 ENABLE_TESTING()
