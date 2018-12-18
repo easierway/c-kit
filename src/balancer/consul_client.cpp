@@ -35,7 +35,7 @@ std::tuple<int,
 
     for (const auto &service : jsonObj.array_items()) {
         std::string zone = "unknown";
-        std::string instanceid = "unknown";
+        std::string instanceID = "unknown";
         int balanceFactor = 0;
         if (service["Service"].is_null()) {
             continue;
@@ -43,8 +43,8 @@ std::tuple<int,
         if (!service["Service"]["Meta"]["zone"].is_null()) {
             zone = service["Service"]["Meta"]["zone"].string_value();
         }
-        if (!service["Service"]["Meta"]["instanceid"].is_null()) {
-            instanceid = service["Service"]["Meta"]["instanceid"].string_value();
+        if (!service["Service"]["Meta"]["instanceID"].is_null()) {
+            instanceID = service["Service"]["Meta"]["instanceID"].string_value();
         }
         if (!service["Service"]["Meta"]["balanceFactor"].is_null()) {
             balanceFactor = service["Service"]["Meta"]["balanceFactor"].int_value();
@@ -54,7 +54,7 @@ std::tuple<int,
         node->host = service["Service"]["Address"].string_value();
         node->port = service["Service"]["Port"].int_value();
         node->zone = zone;
-        node->instanceid = instanceid;
+        node->instanceID = instanceID;
         node->balanceFactor = balanceFactor;
 
         nodes.emplace_back(node);

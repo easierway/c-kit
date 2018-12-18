@@ -10,7 +10,8 @@ namespace kit {
 
 struct ServiceNode {
     std::string host;
-    std::string instanceid;
+    std::string instanceID;
+    std::string publicIP;
     std::string zone;
     int balanceFactor;
     int port;
@@ -27,7 +28,8 @@ struct ServiceNode {
             {"host", this->host},
             {"port", this->port},
             {"zone", this->zone},
-            {"instanceid", this->instanceid},
+            {"instanceid", this->instanceID},
+            {"publicIP", this->publicIP},
             {"balancerFactor", this->balanceFactor},
             {"workload", this->workload},
         };

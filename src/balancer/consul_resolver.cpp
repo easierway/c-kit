@@ -65,7 +65,7 @@ std::tuple<int, std::string> ConsulResolver::updateZoneCPUMap() {
     json11::Json kv;
     std::string err;
     std::tie(status, kv, err) = this->client.GetKV(this->zoneCPUKey, this->timeoutS, this->lastIndex);
-    if (status!=0) {
+    if (status!=STATUSCODE::SUCCESS) {
         return std::make_tuple(status, err);
     }
 
@@ -82,7 +82,7 @@ std::tuple<int, std::string> ConsulResolver::updateZoneCPUMap() {
 
     this->zoneCPUMap = zoneCPUMap;
 
-    LOG4CPLUS_INFO(*(this->logger), "update zoneCPUMap: [" << json11::Json(this->zoneCPUMap).dump() << "]");
+//    LOG4CPLUS_INFO(*(this->logger), "update zoneCPUMap: [" << json11::Json(this->zoneCPUMap).dump() << "]");
     return std::make_tuple(STATUSCODE::SUCCESS, "");
 }
 
@@ -94,19 +94,20 @@ std::tuple<int, std::string> ConsulResolver::updateInstanceFactorMap() {
     if (status!=STATUSCODE::SUCCESS) {
         return std::make_tuple(status, err);
     }
+
     if (kv["data"].is_null()) {
         return std::make_tuple(STATUSCODE::ERROR_CONSUL_VALUE, "no data key, please check instance factor");
     }
+
     auto instanceFactorMap = std::unordered_map<std::string, double>();
-    // TODO: enlarge the content
     for (const auto &item : kv["data"].array_items()) {
         instanceFactorMap[item["instanceid"].string_value()] = item["CPUUtilization"].number_value();
     }
 
     this->instanceFactorMap = instanceFactorMap;
 
-    LOG4CPLUS_INFO(*(this->logger),
-                   "update instanceFactorMap: [" << json11::Json(this->instanceFactorMap).dump() << "]");
+//    LOG4CPLUS_INFO(*(this->logger),
+//                   "update instanceFactorMap: [" << json11::Json(this->instanceFactorMap).dump() << "]");
     return std::make_tuple(0, "");
 }
 
@@ -156,12 +157,12 @@ std::tuple<int, std::string> ConsulResolver::updateServiceZone() {
 
     std::unordered_map<std::string, std::shared_ptr<ServiceZone>> serviceZoneMap;
     for (auto &node : nodes) {
-        if (this->instanceFactorMap.count(node->instanceid)==0) {
+        if (this->instanceFactorMap.count(node->instanceID)==0) {
             // TODO: default 100?
             node->workload = 50;
         } else {
             // TODO: enlarge the map content
-            node->workload = this->instanceFactorMap[node->instanceid];
+            node->workload = this->instanceFactorMap[node->instanceID];
         }
         if (serviceZoneMap.count(node->zone)==0) {
             serviceZoneMap[node->zone] = std::make_shared<ServiceZone>();
@@ -249,8 +250,8 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 candidatePool->weights.emplace_back(0);
 
                 auto balanceFactor = node->balanceFactor;
-                if (balanceFactorCache.count(node->instanceid) > 0) {
-                    balanceFactor = balanceFactorCache[node->instanceid];
+                if (balanceFactorCache.count(node->instanceID) > 0) {
+                    balanceFactor = balanceFactorCache[node->instanceID];
                 }
                 if (abs(node->workload - serviceZone->workload) > this->rateThreshold) {
                     balanceFactor += balanceFactor*(node->workload - serviceZone->workload)/100*this->learningRate;
@@ -265,8 +266,8 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 candidatePool->weights.emplace_back(0);
 
                 auto balanceFactor = node->balanceFactor;
-                if (balanceFactorCache.count(node->instanceid) > 0) {
-                    balanceFactor = balanceFactorCache[node->instanceid];
+                if (balanceFactorCache.count(node->instanceID) > 0) {
+                    balanceFactor = balanceFactorCache[node->instanceID];
                 }
                 // TODO: cross zone adjust
 //                balanceFactor = balanceFactor*(localZone->workload - serviceZone->workload)/100;
