@@ -14,6 +14,7 @@ struct ServiceNode {
     std::string publicIP;
     std::string zone;
     double balanceFactor;
+    double currentFactor;
     int port;
     double workload;
 
@@ -31,6 +32,7 @@ struct ServiceNode {
             {"instanceid", this->instanceID},
             {"publicIP", this->publicIP},
             {"balanceFactor", this->balanceFactor},
+            {"currentFactor", this->currentFactor},
             {"workload", this->workload},
         };
     }

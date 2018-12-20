@@ -57,7 +57,7 @@ TEST(testResolver, caseUpdate) {
     std::tie(code, err) = resolver->updateCandidatePool();
     GTEST_ASSERT_EQ(0, code);
     GTEST_ASSERT_EQ("", err);
-    LOG4CPLUS_DEBUG(logger, "resolver: [" << resolver->to_json().dump() << "]");
+    LOG4CPLUS_DEBUG(logger, "resolver: [" << resolver->to_jsonShort().dump() << "]");
 
     for(auto i = 0; i < 100; i++){
         LOG4CPLUS_DEBUG(logger, "resolver, select node [" << resolver->SelectedNode()->to_json().dump() << "]");

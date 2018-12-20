@@ -63,10 +63,24 @@ class ConsulResolver {
             {"intervalS", this->intervalS},
             {"timeoutS", this->timeoutS},
             {"cpuThreshold", this->cpuThreshold},
-            {"zone", this->zoneCPUMap},
+            {"zoneCPUMap", this->zoneCPUMap},
             {"rateThreshold", this->rateThreshold},
             {"learningRate", this->learningRate},
             {"instanceFactorMap", this->instanceFactorMap},
+        };
+    }
+
+    json11::Json to_jsonShort() const {
+        return json11::Json::object{
+            {"address", this->address},
+            {"service", this->service},
+            {"zone", this->zone},
+            {"intervalS", this->intervalS},
+            {"timeoutS", this->timeoutS},
+            {"cpuThreshold", this->cpuThreshold},
+            {"zoneCPUMap", this->zoneCPUMap},
+            {"rateThreshold", this->rateThreshold},
+            {"learningRate", this->learningRate},
         };
     }
 

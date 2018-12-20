@@ -190,52 +190,7 @@ std::tuple<int, std::string> ConsulResolver::updateServiceZone() {
             localZone = item.second;
         }
     }
-/*
-    int allFactorSum = 0;
-    int currFactorSum = 0;
-    int zoneFactorSum = 0;
-    for (auto &sz : *serviceZones) {
-        allFactorSum += sz->factorSum;
-        // TODO: cpu is 0.123?
-        currFactorSum += sz->factorSum*sz->cpu;
-    }
-    int avgCPU = currFactorSum/allFactorSum;
-    if (localZone->nodes.empty() || (avgCPU < localZone->cpu && localZone->cpu > this->cpuThreshold)) {
-        int needCrossAZFactor = 0;
-        if (localZone->nodes.empty()) {
-            needCrossAZFactor = currFactorSum;
-        } else {
-            needCrossAZFactor = (localZone->cpu - avgCPU)*localZone->factorSum;
-        }
-        for (auto &sz : *serviceZones) {
-            if (sz->cpu < avgCPU) {
-                sz->idleZoneFactor = sz->factorSum*(avgCPU - sz->cpu);
-                zoneFactorSum += sz->idleZoneFactor;
-            }
-        }
-        for (auto &sz : *serviceZones) {
-            if (sz->zone!=this->zone) {
-                sz->zoneFactor = needCrossAZFactor*sz->idleZoneFactor/zoneFactorSum;
-            }
-        }
-    }
-    if (!localZone->nodes.empty()) {
-        localZone->zoneFactor = avgCPU*localZone->factorSum;
-        zoneFactorSum += localZone->zoneFactor;
-    } else {
-        zoneFactorSum = currFactorSum;
-    }
 
-    if (logger!=nullptr) {
-        LOG4CPLUS_INFO(*(this->logger),
-                       "avgCPU: [" << avgCPU << "] zoneFactorSum: [" << zoneFactorSum << "] zone: [" << this->zone
-                                   << "]");
-        for (auto &item : *serviceZones) {
-            LOG4CPLUS_INFO(*(this->logger),
-                           "update zone: [" << item->zone << "], serviceZone: [" << item->to_json().dump() << "]");
-        }
-    }
-*/
     this->serviceZones = serviceZones;
     this->localZone = localZone;
 
@@ -257,10 +212,14 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 if (balanceFactorCache.count(node->instanceID) > 0) {
                     balanceFactor = balanceFactorCache[node->instanceID];
                 }
-                if (abs(node->workload - serviceZone->workload)/serviceZone->workload > this->rateThreshold) {
-                    balanceFactor += balanceFactor*(node->workload - serviceZone->workload)/100*this->learningRate;
-//                    balanceFactor += balanceFactor*this->learningRate;
+                if (abs(node->workload - serviceZone->workload)/100.0 > this->rateThreshold) {
+                    if (node->workload > serviceZone->workload) {
+                        balanceFactor -= balanceFactor*this->learningRate;
+                    } else {
+                        balanceFactor += balanceFactor*this->learningRate;
+                    }
                 }
+                node->currentFactor = balanceFactor;
                 candidatePool->factors.emplace_back(balanceFactor);
                 candidatePool->factorSum += balanceFactor;
             }
@@ -276,10 +235,14 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 if (balanceFactorCache.count(node->instanceID) > 0) {
                     balanceFactor = balanceFactorCache[node->instanceID];
                 }
-                if (abs(node->workload - serviceZone->workload) > this->rateThreshold) {
-                    balanceFactor += balanceFactor*(node->workload - serviceZone->workload)/100*this->learningRate;
-//                    balanceFactor += balanceFactor*this->learningRate;
+                if (abs(node->workload - serviceZone->workload)/100.0 > this->rateThreshold) {
+                    if (node->workload > serviceZone->workload) {
+                        balanceFactor -= balanceFactor*this->learningRate;
+                    } else {
+                        balanceFactor += balanceFactor*this->learningRate;
+                    }
                 }
+                node->currentFactor = balanceFactor;
                 candidatePool->factors.emplace_back(balanceFactor);
                 candidatePool->factorSum += balanceFactor;
             }
