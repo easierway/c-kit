@@ -16,7 +16,6 @@ ConsulResolver::ConsulResolver(
     const std::string &zoneCPUKey,
     const std::string &instanceFactorKey,
     const std::string &onlinelabFactorKey,
-    int intervalS,
     int timeoutS) : client(address) {
     this->address = address;
     this->service = service;
@@ -24,7 +23,6 @@ ConsulResolver::ConsulResolver(
     this->zoneCPUKey = zoneCPUKey,
     this->instanceFactorKey = instanceFactorKey,
     this->onlinelabFactorKey = onlinelabFactorKey,
-    this->intervalS = intervalS;
     this->timeoutS = timeoutS;
     this->cpuThreshold = 0;
     this->lastIndex = "0";
@@ -142,10 +140,10 @@ std::tuple<int, std::string> ConsulResolver::updateOnlinelabFactor() {
         return std::make_tuple(status, err);
     }
     if (!kv["rateThreshold"].is_null()) {
-        this->rateThreshold = kv["rateThreshold"].number_value();
+        this->onlinelab.rateThreshold = kv["rateThreshold"].number_value();
     }
     if (!kv["learningRate"].is_null()) {
-        this->learningRate = kv["learningRate"].number_value();
+        this->onlinelab.learningRate = kv["learningRate"].number_value();
     }
 
     return std::make_tuple(0, "");
@@ -155,7 +153,7 @@ std::tuple<int, std::string> ConsulResolver::updateServiceZone() {
     int status = -1;
     std::vector<std::shared_ptr<ServiceNode>> nodes;
     std::string err;
-    std::tie(status, nodes, err) = this->client.GetService(this->service, this->intervalS, this->lastIndex);
+    std::tie(status, nodes, err) = this->client.GetService(this->service, this->timeoutS, this->lastIndex);
     if (status!=STATUSCODE::SUCCESS) {
         return std::make_tuple(status, err);
     }
@@ -212,11 +210,11 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 if (balanceFactorCache.count(node->instanceID) > 0) {
                     balanceFactor = balanceFactorCache[node->instanceID];
                 }
-                if (abs(node->workload - serviceZone->workload)/100.0 > this->rateThreshold) {
+                if (abs(node->workload - serviceZone->workload)/100.0 > this->onlinelab.rateThreshold) {
                     if (node->workload > serviceZone->workload) {
-                        balanceFactor -= balanceFactor*this->learningRate;
+                        balanceFactor -= balanceFactor*this->onlinelab.learningRate;
                     } else {
-                        balanceFactor += balanceFactor*this->learningRate;
+                        balanceFactor += balanceFactor*this->onlinelab.learningRate;
                     }
                 }
                 node->currentFactor = balanceFactor;
@@ -235,11 +233,11 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 if (balanceFactorCache.count(node->instanceID) > 0) {
                     balanceFactor = balanceFactorCache[node->instanceID];
                 }
-                if (abs(node->workload - serviceZone->workload)/100.0 > this->rateThreshold) {
+                if (abs(node->workload - serviceZone->workload)/100.0 > this->onlinelab.rateThreshold) {
                     if (node->workload > serviceZone->workload) {
-                        balanceFactor -= balanceFactor*this->learningRate;
+                        balanceFactor -= balanceFactor*this->onlinelab.learningRate;
                     } else {
-                        balanceFactor += balanceFactor*this->learningRate;
+                        balanceFactor += balanceFactor*this->onlinelab.learningRate;
                     }
                 }
                 node->currentFactor = balanceFactor;

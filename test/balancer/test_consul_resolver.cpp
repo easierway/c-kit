@@ -27,7 +27,6 @@ TEST(testResolver, caseUpdate) {
         "clb/rs/zone_cpu.json",
         "clb/rs/instance_factor.json",
         "clb/rs/onlinelab_factor.json",
-        15,
         10);
     resolver->SetLogger(&logger);
     int code;
@@ -57,10 +56,11 @@ TEST(testResolver, caseUpdate) {
     std::tie(code, err) = resolver->updateCandidatePool();
     GTEST_ASSERT_EQ(0, code);
     GTEST_ASSERT_EQ("", err);
-    LOG4CPLUS_DEBUG(logger, "resolver: [" << resolver->to_jsonShort().dump() << "]");
+    LOG4CPLUS_DEBUG(logger, "resolver: [" << resolver->to_json().dump() << "]");
 
-    for(auto i = 0; i < 100; i++){
-        LOG4CPLUS_DEBUG(logger, "resolver, select node [" << resolver->SelectedNode()->to_json().dump() << "]");
+    for (auto i = 0; i < 100; i++) {
+        LOG4CPLUS_DEBUG(logger,
+                        "resolver, select node [" << resolver->SelectedNode()->to_jsonBalanceFactor().dump() << "]");
     }
 
 //    std::tie(code, err) = resolver->Start();

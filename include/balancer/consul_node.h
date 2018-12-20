@@ -13,9 +13,9 @@ struct ServiceNode {
     std::string instanceID;
     std::string publicIP;
     std::string zone;
+    int port;
     double balanceFactor;
     double currentFactor;
-    int port;
     double workload;
 
     std::string Address() {
@@ -30,6 +30,16 @@ struct ServiceNode {
             {"port", this->port},
             {"zone", this->zone},
             {"instanceid", this->instanceID},
+            {"publicIP", this->publicIP},
+            {"balanceFactor", this->balanceFactor},
+            {"currentFactor", this->currentFactor},
+            {"workload", this->workload},
+        };
+    }
+
+    json11::Json to_jsonBalanceFactor() const {
+        return json11::Json::object{
+            {"zone", this->zone},
             {"publicIP", this->publicIP},
             {"balanceFactor", this->balanceFactor},
             {"currentFactor", this->currentFactor},
