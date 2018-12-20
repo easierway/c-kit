@@ -28,7 +28,7 @@ class ConsulResolver {
     std::unordered_map<std::string, double>                    zoneCPUMap;           // 各个 zone 负载情况，从 consul 中获取
     std::unordered_map<std::string, double>                    instanceFactorMap;    // 各个机型的权重，从 consul 中获取
     std::unordered_map<std::string, double>                    balanceFactorCache;   // 内存中调整后的factor缓存
-    int                                                        cpuThreshold;         // cpu 阀值，根据 qps 预测要访问的服务 cpu，超过阀值，跨 zone 访问，[0,1]
+    double                                                     cpuThreshold;         // cpu 阀值，根据 qps 预测要访问的服务 cpu，超过阀值，跨 zone 访问，[0,1]
     // TODO: create online lab struct
     double                                                     learningRate;
     double                                                     rateThreshold;
@@ -85,6 +85,10 @@ class ConsulResolver {
     // logger
     void SetLogger(log4cplus::Logger* logger) {
         this->logger = logger;
+    }
+
+    void SetZone(const std::string &zone){
+        this->zone = zone;
     }
 };
 

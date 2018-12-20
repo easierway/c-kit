@@ -55,6 +55,9 @@ TEST(testConsulClient, caseGetService) {
     GTEST_ASSERT_EQ(0, status);
     GTEST_ASSERT_EQ("", err);
     LOG4CPLUS_DEBUG(logger, "health/service/rs: [" << nodes.size() << "]");
+    for (const auto& node: nodes) {
+//        LOG4CPLUS_DEBUG(logger, "health/service/rs, node: [" << node->to_json().dump() << "]");
+    }
 }
 
 }

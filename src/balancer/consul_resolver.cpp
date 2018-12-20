@@ -57,6 +57,11 @@ std::tuple<int, std::string> ConsulResolver::updateAll() {
         LOG4CPLUS_WARN(*(this->logger), "update serviceZone failed. code: [" << code << "], err: [" << err << "]");
         return std::make_tuple(code, err);
     }
+    std::tie(code, err) = this->updateCandidatePool();
+    if (code!=0 && this->logger!=nullptr) {
+        LOG4CPLUS_WARN(*(this->logger), "update candidate pool failed. code: [" << code << "], err: [" << err << "]");
+        return std::make_tuple(code, err);
+    }
     return std::make_tuple(0, "");
 }
 
@@ -151,7 +156,7 @@ std::tuple<int, std::string> ConsulResolver::updateServiceZone() {
     std::vector<std::shared_ptr<ServiceNode>> nodes;
     std::string err;
     std::tie(status, nodes, err) = this->client.GetService(this->service, this->intervalS, this->lastIndex);
-    if (status!=0) {
+    if (status!=STATUSCODE::SUCCESS) {
         return std::make_tuple(status, err);
     }
 
@@ -233,7 +238,6 @@ std::tuple<int, std::string> ConsulResolver::updateServiceZone() {
 */
     this->serviceZones = serviceZones;
     this->localZone = localZone;
-    this->updateCandidatePool();
 
     return std::make_tuple(0, "");
 }
@@ -253,8 +257,9 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 if (balanceFactorCache.count(node->instanceID) > 0) {
                     balanceFactor = balanceFactorCache[node->instanceID];
                 }
-                if (abs(node->workload - serviceZone->workload) > this->rateThreshold) {
-                    balanceFactor += balanceFactor*(node->workload - serviceZone->workload)/100*this->learningRate;
+                if (abs(node->workload - serviceZone->workload)/serviceZone->workload > this->rateThreshold) {
+//                    balanceFactor += balanceFactor*(node->workload - serviceZone->workload)/100*this->learningRate;
+                    balanceFactor += balanceFactor*this->learningRate;
                 }
                 candidatePool->factors.emplace_back(balanceFactor);
                 candidatePool->factorSum += balanceFactor;
@@ -266,13 +271,14 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 candidatePool->weights.emplace_back(0);
 
                 auto balanceFactor = node->balanceFactor;
+                // TODO: cross zone adjust
+                balanceFactor = balanceFactor*(localZone->workload - serviceZone->workload)/100;
                 if (balanceFactorCache.count(node->instanceID) > 0) {
                     balanceFactor = balanceFactorCache[node->instanceID];
                 }
-                // TODO: cross zone adjust
-//                balanceFactor = balanceFactor*(localZone->workload - serviceZone->workload)/100;
                 if (abs(node->workload - serviceZone->workload) > this->rateThreshold) {
-                    balanceFactor += balanceFactor*(node->workload - serviceZone->workload)/100*this->learningRate;
+//                    balanceFactor += balanceFactor*(node->workload - serviceZone->workload)/100*this->learningRate;
+                    balanceFactor += balanceFactor*this->learningRate;
                 }
                 candidatePool->factors.emplace_back(balanceFactor);
                 candidatePool->factorSum += balanceFactor;
@@ -292,7 +298,8 @@ std::shared_ptr<ServiceNode> ConsulResolver::SelectedNode() {
     this->serviceUpdaterMutex.unlock_shared();
     std::lock_guard<std::mutex> lock_guard(this->discoverMutex);
 
-    int idx = 0, max = 0;
+    int idx = 0;
+    double max = 0;
     for (int i = 0; i < candidatePool->factors.size(); i++) {
         candidatePool->weights[i] += candidatePool->factors[i];
         if (max < candidatePool->weights[i]) {

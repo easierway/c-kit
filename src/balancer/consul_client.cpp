@@ -1,8 +1,10 @@
 #include "balancer/consul_client.h"
 #include <iostream>
 #include <json11.hpp>
+#include <log4cplus/loggingmacros.h>
 #include <map>
 #include <sstream>
+
 #include "util/util.h"
 
 namespace kit {
@@ -36,6 +38,7 @@ std::tuple<int,
     for (const auto &service : jsonObj.array_items()) {
         std::string zone = "unknown";
         std::string instanceID = "unknown";
+        std::string publicIP;
         int balanceFactor = 0;
         if (service["Service"].is_null()) {
             continue;
@@ -43,11 +46,14 @@ std::tuple<int,
         if (!service["Service"]["Meta"]["zone"].is_null()) {
             zone = service["Service"]["Meta"]["zone"].string_value();
         }
+        if (!service["Service"]["Meta"]["balanceFactor"].is_null()) {
+            balanceFactor = std::stoi(service["Service"]["Meta"]["balanceFactor"].string_value());
+        }
         if (!service["Service"]["Meta"]["instanceID"].is_null()) {
             instanceID = service["Service"]["Meta"]["instanceID"].string_value();
         }
-        if (!service["Service"]["Meta"]["balanceFactor"].is_null()) {
-            balanceFactor = service["Service"]["Meta"]["balanceFactor"].int_value();
+        if (!service["Service"]["Meta"]["publicIP"].is_null()) {
+            publicIP = service["Service"]["Meta"]["publicIP"].string_value();
         }
 
         auto node = std::make_shared<ServiceNode>();
@@ -55,6 +61,7 @@ std::tuple<int,
         node->port = service["Service"]["Port"].int_value();
         node->zone = zone;
         node->instanceID = instanceID;
+        node->publicIP = publicIP;
         node->balanceFactor = balanceFactor;
 
         nodes.emplace_back(node);

@@ -49,11 +49,18 @@ TEST(testResolver, caseUpdate) {
     GTEST_ASSERT_EQ(0, code);
     GTEST_ASSERT_EQ("", err);
 
+    resolver->SetZone("ap-southeast-1a");
     std::tie(code, err) = resolver->updateServiceZone();
     GTEST_ASSERT_EQ(0, code);
     GTEST_ASSERT_EQ("", err);
 
+    std::tie(code, err) = resolver->updateCandidatePool();
+    GTEST_ASSERT_EQ(0, code);
+    GTEST_ASSERT_EQ("", err);
     LOG4CPLUS_DEBUG(logger, "resolver: [" << resolver->to_json().dump() << "]");
+
+    auto snode1 = resolver->SelectedNode();
+    LOG4CPLUS_DEBUG(logger, "resolver, select node [" << snode1->to_json().dump() << "]");
 
 //    std::tie(code, err) = resolver->Start();
 //    if (code!=0) {

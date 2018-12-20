@@ -13,9 +13,9 @@ struct ServiceNode {
     std::string instanceID;
     std::string publicIP;
     std::string zone;
-    int balanceFactor;
+    double balanceFactor;
     int port;
-    int workload;
+    double workload;
 
     std::string Address() {
         std::stringstream ss;
@@ -30,7 +30,7 @@ struct ServiceNode {
             {"zone", this->zone},
             {"instanceid", this->instanceID},
             {"publicIP", this->publicIP},
-            {"balancerFactor", this->balanceFactor},
+            {"balanceFactor", this->balanceFactor},
             {"workload", this->workload},
         };
     }
@@ -38,7 +38,7 @@ struct ServiceNode {
 
 struct ServiceZone {
     std::string zone;
-    int workload;
+    double workload;
     std::vector<std::shared_ptr<ServiceNode>> nodes;
 
     json11::Json to_json() const {
@@ -56,9 +56,9 @@ struct ServiceZone {
 
 struct CandidatePool {
     std::vector<std::shared_ptr<ServiceNode>> nodes;
-    std::vector<int32_t> factors;
-    std::vector<int32_t> weights;
-    int32_t factorSum;
+    std::vector<double> factors;
+    std::vector<double> weights;
+    double factorSum;
 
     json11::Json to_json() const {
         std::vector<ServiceNode> nodes(this->nodes.size());
