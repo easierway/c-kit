@@ -59,8 +59,9 @@ TEST(testResolver, caseUpdate) {
     GTEST_ASSERT_EQ("", err);
     LOG4CPLUS_DEBUG(logger, "resolver: [" << resolver->to_json().dump() << "]");
 
-    auto snode1 = resolver->SelectedNode();
-    LOG4CPLUS_DEBUG(logger, "resolver, select node [" << snode1->to_json().dump() << "]");
+    for(auto i = 0; i < 100; i++){
+        LOG4CPLUS_DEBUG(logger, "resolver, select node [" << resolver->SelectedNode()->to_json().dump() << "]");
+    }
 
 //    std::tie(code, err) = resolver->Start();
 //    if (code!=0) {

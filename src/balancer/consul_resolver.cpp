@@ -258,8 +258,8 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                     balanceFactor = balanceFactorCache[node->instanceID];
                 }
                 if (abs(node->workload - serviceZone->workload)/serviceZone->workload > this->rateThreshold) {
-//                    balanceFactor += balanceFactor*(node->workload - serviceZone->workload)/100*this->learningRate;
-                    balanceFactor += balanceFactor*this->learningRate;
+                    balanceFactor += balanceFactor*(node->workload - serviceZone->workload)/100*this->learningRate;
+//                    balanceFactor += balanceFactor*this->learningRate;
                 }
                 candidatePool->factors.emplace_back(balanceFactor);
                 candidatePool->factorSum += balanceFactor;
@@ -277,8 +277,8 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                     balanceFactor = balanceFactorCache[node->instanceID];
                 }
                 if (abs(node->workload - serviceZone->workload) > this->rateThreshold) {
-//                    balanceFactor += balanceFactor*(node->workload - serviceZone->workload)/100*this->learningRate;
-                    balanceFactor += balanceFactor*this->learningRate;
+                    balanceFactor += balanceFactor*(node->workload - serviceZone->workload)/100*this->learningRate;
+//                    balanceFactor += balanceFactor*this->learningRate;
                 }
                 candidatePool->factors.emplace_back(balanceFactor);
                 candidatePool->factorSum += balanceFactor;
