@@ -25,6 +25,7 @@ public:
              int intervalS = 60);
 
     void SetLogger(log4cplus::Logger *logger) {
+        this->resolver.SetLogger(logger);
         this->logger = logger;
     }
     // TODO: this method should not be public, but test needed now

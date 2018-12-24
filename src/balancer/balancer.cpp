@@ -31,11 +31,11 @@ std::tuple<int, std::string> Balancer::Start() {
 
     this->serviceUpdater = new std::thread([&]() {
         while (!this->done) {
+            std::this_thread::sleep_for(std::chrono::seconds(this->intervalS));
             LOG4CPLUS_DEBUG(*(this->logger), "update consul metrics start");
             this->resolver.updateAll();
             LOG4CPLUS_INFO(*(this->logger),
                            "update consul metrics finish, resolver" << this->resolver.to_json().dump());
-            std::this_thread::sleep_for(std::chrono::seconds(this->intervalS));
         }
     });
 
