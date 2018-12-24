@@ -82,6 +82,31 @@ TEST(testResolver, caseUpdate) {
 //    resolver->Stop();
 }
 
+TEST(testResolver, caseUpdateAll) {
+    log4cplus::Logger logger = log4cplus::Logger::getInstance("test");
+    auto resolver = std::make_shared<ConsulResolver>(
+        "http://sg-consul.mobvista.com:8500",
+        "rs",
+        "clb/rs/cpu_threshold.json",
+        "clb/rs/zone_cpu.json",
+        "clb/rs/instance_factor.json",
+        "clb/rs/onlinelab_factor.json",
+        10);
+    resolver->SetLogger(&logger);
+    resolver->SetZone("ap-southeast-1a");
+    int code;
+    std::string err;
+    std::tie(code, err) = resolver->updateAll();
+    GTEST_ASSERT_EQ(0, code);
+    GTEST_ASSERT_EQ("", err);
+    LOG4CPLUS_DEBUG(logger, "resolver: [" << resolver->to_json().dump() << "]");
+
+    for (auto i = 0; i < 100; i++) {
+        LOG4CPLUS_DEBUG(logger,
+                        "resolver, select node [" << resolver->SelectedNode()->to_jsonBalanceFactor().dump() << "]");
+    }
+}
+
 TEST(testResolver, caseConcurrency) {
 //    log4cplus::Logger logger = log4cplus::Logger::getInstance("test");
 //    auto resolver = std::make_shared<ConsulResolver>(

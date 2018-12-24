@@ -139,11 +139,15 @@ std::tuple<int, std::string> ConsulResolver::updateOnlinelabFactor() {
         LOG4CPLUS_ERROR(*(this->logger), "update OnlinelabFactor [" << this->onlinelabFactorKey << "] failed. " << err);
         return std::make_tuple(status, err);
     }
+    // TODO: return error when not enough parameter provided
     if (!kv["rateThreshold"].is_null()) {
         this->onlinelab.rateThreshold = kv["rateThreshold"].number_value();
     }
     if (!kv["learningRate"].is_null()) {
         this->onlinelab.learningRate = kv["learningRate"].number_value();
+    }
+    if (!kv["crossZoneRate"].is_null()) {
+        this->onlinelab.crossZoneRate = kv["crossZoneRate"].number_value();
     }
 
     return std::make_tuple(0, "");
@@ -220,6 +224,7 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 node->currentFactor = balanceFactor;
                 candidatePool->factors.emplace_back(balanceFactor);
                 candidatePool->factorSum += balanceFactor;
+                balanceFactorCache[node->instanceID] = balanceFactor;
             }
         } else if (localZone->nodes.empty()
             || localZone->workload > this->cpuThreshold && localZone->workload > serviceZone->workload) {
@@ -229,7 +234,8 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
 
                 auto balanceFactor = node->balanceFactor;
                 // TODO: cross zone adjust
-                balanceFactor = balanceFactor*(localZone->workload - serviceZone->workload)/100;
+                balanceFactor =
+                    balanceFactor*(localZone->workload - serviceZone->workload)/100*this->onlinelab.crossZoneRate;
                 if (balanceFactorCache.count(node->instanceID) > 0) {
                     balanceFactor = balanceFactorCache[node->instanceID];
                 }
@@ -243,6 +249,7 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 node->currentFactor = balanceFactor;
                 candidatePool->factors.emplace_back(balanceFactor);
                 candidatePool->factorSum += balanceFactor;
+                balanceFactorCache[node->instanceID] = balanceFactor;
             }
         }
     }

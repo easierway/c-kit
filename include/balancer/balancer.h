@@ -27,6 +27,11 @@ public:
     void SetLogger(log4cplus::Logger *logger) {
         this->logger = logger;
     }
+    // TODO: this method should not be public, but test needed now
+    void SetZone(const std::string& zone) {
+        this->resolver.SetZone(zone);
+    }
+
     std::tuple<int, std::string> Start();
     std::tuple<int, std::string> Stop();
     std::shared_ptr<ServiceNode> SelectedNode();
