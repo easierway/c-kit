@@ -96,7 +96,7 @@ link_directories(
     "${CURL_ROOT}/lib"
     "${JSON11_ROOT}/lib"
     "${LOG4CPLUS_ROOT}/lib"
-    "${C_KIT_SOURCE_DIR}/../third-lib/openssl-OpenSSL_1_0_2o/lib"
+    "${OPENSSL_ROOT}/lib"
 )
 
 aux_source_directory(${C_KIT_SOURCE_DIR}/src/util util_source)
