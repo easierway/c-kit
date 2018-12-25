@@ -24,10 +24,12 @@ Balancer::Balancer(
 std::tuple<int, std::string> Balancer::Start() {
     std::string err;
     int code;
+    LOG4CPLUS_DEBUG(*(this->logger), "update consul metrics start");
     std::tie(code, err) = this->resolver.updateAll();
     if (code!=STATUSCODE::SUCCESS) {
         return std::make_tuple(code, err);
     }
+    LOG4CPLUS_INFO(*(this->logger), "update consul metrics finish, resolver" << this->resolver.to_json().dump());
 
     this->serviceUpdater = new std::thread([&]() {
         while (!this->done) {
