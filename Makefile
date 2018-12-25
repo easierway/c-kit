@@ -24,6 +24,9 @@ release: prebuild
 	cd $(BUILD) && $(CMAKE) -D CMAKE_BUILD_TYPE=Release $(TOP) && $(MAKE)
 .PHONY: release
 
+test:
+	cd $(BUILD) && $(MAKE) test
+.PHONY: test
 
 clean:
 	cd $(BUILD) && $(MAKE) clean
