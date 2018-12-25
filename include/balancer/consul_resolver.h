@@ -12,6 +12,7 @@
 
 #include "consul_client.h"
 #include "onlinelab.h"
+#include "resolver_metic.h"
 
 namespace kit {
 
@@ -38,6 +39,8 @@ class ConsulResolver {
     std::string                                                onlinelabFactorKey;   // tuning factor
     std::string                                                zoneCPUKey;           // cpu 阀值在 consul 中的 key
 
+    std::shared_ptr<ResolverMetric>                            metric;               // metric of resolver
+    bool                                                       zoneCPUUpdated;       // zone cpu updated
     int                                                        timeoutS;             // 访问 consul 超时时间
     boost::shared_mutex                                        serviceUpdaterMutex;  // 服务更新锁
     std::mutex                                                 discoverMutex;        // 阻塞调用 DiscoverNode

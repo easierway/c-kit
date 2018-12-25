@@ -27,6 +27,7 @@ ConsulResolver::ConsulResolver(
     this->cpuThreshold = 0;
     this->lastIndex = "0";
     this->zone = Zone();
+    this->metric = std::make_shared<ResolverMetric>();
     this->logger = nullptr;
 }
 
@@ -64,6 +65,7 @@ std::tuple<int, std::string> ConsulResolver::updateAll() {
 }
 
 std::tuple<int, std::string> ConsulResolver::updateZoneCPUMap() {
+    static time_t lastUpdated = 0;
     int status = -1;
     json11::Json kv;
     std::string err;
@@ -72,8 +74,19 @@ std::tuple<int, std::string> ConsulResolver::updateZoneCPUMap() {
         return std::make_tuple(status, err);
     }
 
-    if (kv["data"].is_null()) {
-        return std::make_tuple(STATUSCODE::ERROR_CONSUL_VALUE, "no data key, please check zone cpu map");
+    if (kv["data"].is_null() || kv["updated"].is_null()) {
+        return std::make_tuple(STATUSCODE::ERROR_CONSUL_VALUE, "no correct key, please check zone cpu map");
+    }
+
+    // skip the same updated record
+    time_t updated = static_cast<time_t>(kv["updated"].number_value());
+    if(updated == lastUpdated) {
+        this->zoneCPUUpdated = false;
+        LOG4CPLUS_INFO(*(this->logger), "zone cpu no update, will hold factor learning");
+        return std::make_tuple(STATUSCODE::SUCCESS, "");
+    } else {
+        lastUpdated = updated;
+        this->zoneCPUUpdated = true;
     }
 
     auto zoneCPUMap = std::unordered_map<std::string, double>();
@@ -206,7 +219,7 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
     auto candidatePool = std::make_shared<CandidatePool>();
     for (auto &serviceZone : *serviceZones) {
         if (localZone->zone==serviceZone->zone) {
-            for (auto &node : localZone->nodes) {
+            for (auto &node : serviceZone->nodes) {
                 candidatePool->nodes.emplace_back(node);
                 candidatePool->weights.emplace_back(0);
 
@@ -214,7 +227,7 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 if (balanceFactorCache.count(node->instanceID) > 0) {
                     balanceFactor = balanceFactorCache[node->instanceID];
                 }
-                if (abs(node->workload - serviceZone->workload)/100.0 > this->onlinelab.rateThreshold) {
+                if (this->zoneCPUUpdated && abs(node->workload - serviceZone->workload)/100.0 > this->onlinelab.rateThreshold) {
                     if (node->workload > serviceZone->workload) {
                         balanceFactor -= balanceFactor*this->onlinelab.learningRate;
                     } else {
@@ -239,7 +252,7 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 if (balanceFactorCache.count(node->instanceID) > 0) {
                     balanceFactor = balanceFactorCache[node->instanceID];
                 }
-                if (abs(node->workload - serviceZone->workload)/100.0 > this->onlinelab.rateThreshold) {
+                if (this->zoneCPUUpdated && abs(node->workload - serviceZone->workload)/100.0 > this->onlinelab.rateThreshold) {
                     if (node->workload > serviceZone->workload) {
                         balanceFactor -= balanceFactor*this->onlinelab.learningRate;
                     } else {
@@ -254,8 +267,14 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
         }
     }
 
+    // metric
+    auto metric = std::make_shared<ResolverMetric>();
+    metric->candidatePoolSize = candidatePool->nodes.size();
+
     this->serviceUpdaterMutex.lock();
+    LOG4CPLUS_INFO(*(this->logger), "previous metric: " << this->metric->to_json().dump());
     this->candidatePool = candidatePool;
+    this->metric = metric;
     this->serviceUpdaterMutex.unlock();
     return std::make_tuple(0, "");
 }
@@ -263,6 +282,7 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
 std::shared_ptr<ServiceNode> ConsulResolver::SelectedNode() {
     this->serviceUpdaterMutex.lock_shared();
     auto candidatePool = this->candidatePool;
+    auto metric = this->metric;
     this->serviceUpdaterMutex.unlock_shared();
     std::lock_guard<std::mutex> lock_guard(this->discoverMutex);
 
@@ -276,6 +296,12 @@ std::shared_ptr<ServiceNode> ConsulResolver::SelectedNode() {
         }
     }
     candidatePool->weights[idx] -= candidatePool->factorSum;
+
+    // metric
+    metric->selectNum += 1;
+    if (candidatePool->nodes[idx]->zone != this->zone) {
+        metric->crossZoneNum += 1;
+    }
 
     return candidatePool->nodes[idx];
 }
