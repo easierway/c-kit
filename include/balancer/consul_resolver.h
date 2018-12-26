@@ -45,7 +45,6 @@ class ConsulResolver {
     boost::shared_mutex                                        serviceUpdaterMutex;  // 服务更新锁
     std::mutex                                                 discoverMutex;        // 阻塞调用 DiscoverNode
     log4cplus::Logger*                                         logger;               // 日志
-    std::shared_ptr<ResolverMetric>                            metric;               // metric of resolver
 
    public:
     ConsulResolver(
