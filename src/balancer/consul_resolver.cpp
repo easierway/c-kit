@@ -303,6 +303,7 @@ std::shared_ptr<ServiceNode> ConsulResolver::SelectedNode() {
         metric->crossZoneNum += 1;
     }
 
+    LOG4CPLUS_DEBUG(*(this->logger), "SelectedNode: " << candidatePool->nodes[idx]->to_json().dump());
     return candidatePool->nodes[idx];
 }
 

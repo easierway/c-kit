@@ -27,8 +27,7 @@ int main(int argc, char** argv) {
     std::this_thread::sleep_for(std::chrono::seconds(3));
     for (auto i = 0; i < 100000; i++) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        LOG4CPLUS_DEBUG(logger,
-                        "balancer, select node [" << balancer->SelectedNode()->to_jsonBalanceFactor().dump() << "]");
+        balancer->SelectedNode()->to_jsonBalanceFactor().dump();
     }
 
 
