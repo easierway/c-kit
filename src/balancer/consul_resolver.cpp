@@ -217,7 +217,7 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
     auto serviceZones = this->serviceZones;
     auto &balanceFactorCache = this->balanceFactorCache;
     auto candidatePool = std::make_shared<CandidatePool>();
-    static auto BALANCEFACTOR_MAX = 5000;
+    static auto BALANCEFACTOR_MAX = 10000;
     static auto BALANCEFACTOR_MIN = 100;
     for (auto &serviceZone : *serviceZones) {
         if (localZone->zone==serviceZone->zone) {
@@ -235,6 +235,12 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                     } else {
                         balanceFactor += balanceFactor*this->onlinelab.learningRate;
                     }
+                }
+                // risk control
+                if (balanceFactor > BALANCEFACTOR_MAX) {
+                    balanceFactor = BALANCEFACTOR_MAX;
+                } else if (balanceFactor < BALANCEFACTOR_MIN) {
+                    balanceFactor = BALANCEFACTOR_MIN;
                 }
                 node->currentFactor = balanceFactor;
                 candidatePool->factors.emplace_back(balanceFactor);
@@ -260,6 +266,12 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                     } else {
                         balanceFactor += balanceFactor*this->onlinelab.learningRate;
                     }
+                }
+                // risk control
+                if (balanceFactor > BALANCEFACTOR_MAX) {
+                    balanceFactor = BALANCEFACTOR_MAX;
+                } else if (balanceFactor < BALANCEFACTOR_MIN) {
+                    balanceFactor = BALANCEFACTOR_MIN;
                 }
                 node->currentFactor = balanceFactor;
                 candidatePool->factors.emplace_back(balanceFactor);
