@@ -251,23 +251,27 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
             }
         } else if (localZone->nodes.empty()
             || localZone->workload > this->cpuThreshold && localZone->workload > serviceZone->workload) {
+            // cross zone
             for (auto &node: serviceZone->nodes) {
                 candidatePool->nodes.emplace_back(node);
                 candidatePool->weights.emplace_back(0);
 
+                // initial balanceFactor if cached, use cache
                 auto balanceFactor = node->balanceFactor;
-                // TODO: cross zone adjust
-                balanceFactor =
-                    balanceFactor*(localZone->workload - serviceZone->workload)/100*this->onlinelab.crossZoneRate;
+                balanceFactor = balanceFactor*(localZone->workload - serviceZone->workload)/100;
                 if (balanceFactorCache.count(node->instanceID) > 0) {
                     balanceFactor = balanceFactorCache[node->instanceID];
                 }
-                if (this->zoneCPUUpdated
-                    && abs(node->workload - serviceZone->workload)/100.0 > this->onlinelab.rateThreshold) {
-                    if (node->workload > serviceZone->workload) {
-                        balanceFactor -= balanceFactor*this->onlinelab.learningRate;
-                    } else {
-                        balanceFactor += balanceFactor*this->onlinelab.learningRate;
+                if (this->zoneCPUUpdated) {
+                    // increase cross zone all node factor
+                    balanceFactor = balanceFactor*this->onlinelab.crossZoneRate;
+                    // increase single lazy node factor
+                    if( abs(node->workload - serviceZone->workload)/100.0 > this->onlinelab.rateThreshold) {
+                        if (node->workload > serviceZone->workload) {
+                            balanceFactor -= balanceFactor*this->onlinelab.learningRate;
+                        } else {
+                            balanceFactor += balanceFactor*this->onlinelab.learningRate;
+                        }
                     }
                 }
                 // risk control
