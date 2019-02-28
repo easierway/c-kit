@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
 
 
     auto balancer = std::make_shared<kit::Balancer>(
-        "http://sg-consul.mobvista.com:8500",
+        "http://fk-consul.mobvista.com:8500",
         "rs",
         "clb/rs/cpu_threshold.json",
         "clb/rs/zone_cpu.json",
@@ -19,7 +19,8 @@ int main(int argc, char** argv) {
         10,
         15);
     balancer->SetLogger(&logger);
-    balancer->SetZone("ap-southeast-1a");
+//    balancer->SetZone("ap-southeast-1a");
+    balancer->SetZone("eu-central-1b");
 
     int code;
     std::string err;

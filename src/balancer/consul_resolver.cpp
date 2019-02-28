@@ -56,6 +56,8 @@ std::tuple<int, std::string> ConsulResolver::updateAll() {
         LOG4CPLUS_WARN(*(this->logger), "update serviceZone failed. code: [" << code << "], err: [" << err << "]");
         return std::make_tuple(code, err);
     }
+
+    this->expireBalanceFactorCache();
     std::tie(code, err) = this->updateCandidatePool();
     if (code!=0 && this->logger!=nullptr) {
         LOG4CPLUS_WARN(*(this->logger), "update candidate pool failed. code: [" << code << "], err: [" << err << "]");
@@ -300,6 +302,21 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
     this->candidatePool = candidatePool;
     this->metric = metric;
     this->serviceUpdaterMutex.unlock();
+    return std::make_tuple(0, "");
+}
+
+
+std::tuple<int, std::string> ConsulResolver::expireBalanceFactorCache(){
+    static std::random_device rd;
+    static std::mt19937 mt(rd());
+    // TODO: using consul
+    static std::uniform_int_distribution<int> dist(1, 200);
+    if (1 == dist(mt)) {
+        this->balanceFactorCache.clear();
+        LOG4CPLUS_INFO(*(this->logger), "balanceFactorCache expired");
+    } else {
+        LOG4CPLUS_DEBUG(*(this->logger), "balanceFactorCache alive");
+    }
     return std::make_tuple(0, "");
 }
 
