@@ -80,7 +80,7 @@ std::tuple<int, std::string> ConsulResolver::updateZoneCPUMap() {
 
     // skip the same updated record
     time_t updated = static_cast<time_t>(kv["updated"].number_value());
-    if(updated == lastUpdated) {
+    if (updated==lastUpdated) {
         this->zoneCPUUpdated = false;
         LOG4CPLUS_INFO(*(this->logger), "zone cpu no update, will hold factor learning");
         return std::make_tuple(STATUSCODE::SUCCESS, "");
@@ -204,6 +204,7 @@ std::tuple<int, std::string> ConsulResolver::updateServiceZone() {
         if (item.second->zone==this->zone) {
             localZone = item.second;
         }
+        LOG4CPLUS_INFO(*(this->logger), "zone: " << item.first << " node: " << item.second->nodes.size());
     }
 
     this->serviceZones = serviceZones;
@@ -229,7 +230,8 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 if (balanceFactorCache.count(node->instanceID) > 0) {
                     balanceFactor = balanceFactorCache[node->instanceID];
                 }
-                if (this->zoneCPUUpdated && abs(node->workload - serviceZone->workload)/100.0 > this->onlinelab.rateThreshold) {
+                if (this->zoneCPUUpdated
+                    && abs(node->workload - serviceZone->workload)/100.0 > this->onlinelab.rateThreshold) {
                     if (node->workload > serviceZone->workload) {
                         balanceFactor -= balanceFactor*this->onlinelab.learningRate;
                     } else {
@@ -260,7 +262,8 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 if (balanceFactorCache.count(node->instanceID) > 0) {
                     balanceFactor = balanceFactorCache[node->instanceID];
                 }
-                if (this->zoneCPUUpdated && abs(node->workload - serviceZone->workload)/100.0 > this->onlinelab.rateThreshold) {
+                if (this->zoneCPUUpdated
+                    && abs(node->workload - serviceZone->workload)/100.0 > this->onlinelab.rateThreshold) {
                     if (node->workload > serviceZone->workload) {
                         balanceFactor -= balanceFactor*this->onlinelab.learningRate;
                     } else {
@@ -313,7 +316,7 @@ std::shared_ptr<ServiceNode> ConsulResolver::SelectedNode() {
 
     // metric
     metric->selectNum += 1;
-    if (candidatePool->nodes[idx]->zone != this->zone) {
+    if (candidatePool->nodes[idx]->zone!=this->zone) {
         metric->crossZoneNum += 1;
     }
 
