@@ -218,8 +218,11 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
     auto serviceZones = this->serviceZones;
     auto &balanceFactorCache = this->balanceFactorCache;
     auto candidatePool = std::make_shared<CandidatePool>();
-    static auto BALANCEFACTOR_MAX = 10000;
-    static auto BALANCEFACTOR_MIN = 100;
+    // TODO: using onlinelab
+    static auto BALANCEFACTOR_MAX_LOCAL = 5000;
+    static auto BALANCEFACTOR_MIN_LOCAL = 200;
+    static auto BALANCEFACTOR_MAX_CROSS = 2000;
+    static auto BALANCEFACTOR_MIN_CROSS = 100;
     for (auto &serviceZone : *serviceZones) {
         if (localZone->zone==serviceZone->zone) {
             for (auto &node : serviceZone->nodes) {
@@ -239,10 +242,10 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                     }
                 }
                 // risk control
-                if (balanceFactor > BALANCEFACTOR_MAX) {
-                    balanceFactor = BALANCEFACTOR_MAX;
-                } else if (balanceFactor < BALANCEFACTOR_MIN) {
-                    balanceFactor = BALANCEFACTOR_MIN;
+                if (balanceFactor > BALANCEFACTOR_MAX_LOCAL) {
+                    balanceFactor = BALANCEFACTOR_MAX_LOCAL;
+                } else if (balanceFactor < BALANCEFACTOR_MIN_LOCAL) {
+                    balanceFactor = BALANCEFACTOR_MIN_LOCAL;
                 }
                 node->currentFactor = balanceFactor;
                 candidatePool->factors.emplace_back(balanceFactor);
@@ -275,10 +278,10 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                     }
                 }
                 // risk control
-                if (balanceFactor > BALANCEFACTOR_MAX) {
-                    balanceFactor = BALANCEFACTOR_MAX;
-                } else if (balanceFactor < BALANCEFACTOR_MIN) {
-                    balanceFactor = BALANCEFACTOR_MIN;
+                if (balanceFactor > BALANCEFACTOR_MAX_CROSS) {
+                    balanceFactor = BALANCEFACTOR_MAX_CROSS;
+                } else if (balanceFactor < BALANCEFACTOR_MIN_CROSS) {
+                    balanceFactor = BALANCEFACTOR_MIN_CROSS;
                 }
                 node->currentFactor = balanceFactor;
                 candidatePool->factors.emplace_back(balanceFactor);
