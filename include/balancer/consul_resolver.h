@@ -76,6 +76,9 @@ class ConsulResolver {
     std::tuple<int, std::string> updateCandidatePool();
     std::tuple<int, std::string> updateAll();
 
+    // clean factor cache
+    std::tuple<int, std::string> expireBalanceFactorCache();
+
     // selection
     std::shared_ptr<ServiceNode> SelectedNode();
 
