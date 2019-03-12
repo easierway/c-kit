@@ -221,10 +221,10 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
     auto &balanceFactorCache = this->balanceFactorCache;
     auto candidatePool = std::make_shared<CandidatePool>();
     // TODO: using onlinelab
-    static auto BALANCEFACTOR_MAX_LOCAL = 5000;
+    static auto BALANCEFACTOR_MAX_LOCAL = 3000;
     static auto BALANCEFACTOR_MIN_LOCAL = 200;
-    static auto BALANCEFACTOR_MAX_CROSS = 2000;
-    static auto BALANCEFACTOR_MIN_CROSS = 100;
+    static auto BALANCEFACTOR_MAX_CROSS = 1000;
+    static auto BALANCEFACTOR_MIN_CROSS = 50;
     for (auto &serviceZone : *serviceZones) {
         if (localZone->zone==serviceZone->zone) {
             for (auto &node : serviceZone->nodes) {
@@ -235,8 +235,7 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 if (balanceFactorCache.count(node->instanceID) > 0) {
                     balanceFactor = balanceFactorCache[node->instanceID];
                 }
-                if (this->zoneCPUUpdated
-                    && abs(node->workload - serviceZone->workload)/100.0 > this->onlinelab.rateThreshold) {
+                if (this->zoneCPUUpdated && not nodeBalanced(*node, *serviceZone)) {
                     if (node->workload > serviceZone->workload) {
                         balanceFactor -= balanceFactor*this->onlinelab.learningRate;
                     } else {
@@ -254,8 +253,7 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 candidatePool->factorSum += balanceFactor;
                 balanceFactorCache[node->instanceID] = balanceFactor;
             }
-        } else if (localZone->nodes.empty()
-            || localZone->workload > this->cpuThreshold && localZone->workload > serviceZone->workload) {
+        } else {
             // cross zone
             for (auto &node: serviceZone->nodes) {
                 candidatePool->nodes.emplace_back(node);
@@ -263,15 +261,28 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
 
                 // initial balanceFactor if cached, use cache
                 auto balanceFactor = node->balanceFactor;
-                balanceFactor = balanceFactor*(localZone->workload - serviceZone->workload)/100;
                 if (balanceFactorCache.count(node->instanceID) > 0) {
                     balanceFactor = balanceFactorCache[node->instanceID];
+                } else {
+                    // cross zone threshold double the node threshold
+                    if (not zoneBalanced(*localZone, *serviceZone) && localZone->workload > serviceZone->workload) {
+                        balanceFactor = balanceFactor*(localZone->workload - serviceZone->workload)/100.0;
+                    } else {
+                        balanceFactor = BALANCEFACTOR_MIN_CROSS;
+                    }
                 }
+
                 if (this->zoneCPUUpdated) {
-                    // increase cross zone all node factor
-                    balanceFactor = balanceFactor*this->onlinelab.crossZoneRate;
-                    // increase single lazy node factor
-                    if( abs(node->workload - serviceZone->workload)/100.0 > this->onlinelab.rateThreshold) {
+                    // update cross zone all node factor
+                    if (localZone->workload > this->cpuThreshold && not zoneBalanced(*localZone, *serviceZone)
+                        && localZone->workload > serviceZone->workload) {
+                        balanceFactor += balanceFactor*this->onlinelab.learningRate;
+                    } else {
+                        balanceFactor -= balanceFactor*this->onlinelab.learningRate;
+                    }
+
+                    // update single lazy/busy node factor
+                    if (not nodeBalanced(*node, *serviceZone)) {
                         if (node->workload > serviceZone->workload) {
                             balanceFactor -= balanceFactor*this->onlinelab.learningRate;
                         } else {
@@ -305,19 +316,27 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
     return std::make_tuple(0, "");
 }
 
-
-std::tuple<int, std::string> ConsulResolver::expireBalanceFactorCache(){
+std::tuple<int, std::string> ConsulResolver::expireBalanceFactorCache() {
     static std::random_device rd;
     static std::mt19937 mt(rd());
-    // TODO: using consul
-    static std::uniform_int_distribution<int> dist(1, 200);
-    if (1 == dist(mt)) {
+    // TODO: using onlinelab
+    static std::uniform_int_distribution<int> dist(1, 300);
+    if (1==dist(mt)) {
         this->balanceFactorCache.clear();
         LOG4CPLUS_INFO(*(this->logger), "balanceFactorCache expired");
     } else {
         LOG4CPLUS_DEBUG(*(this->logger), "balanceFactorCache alive");
     }
     return std::make_tuple(0, "");
+}
+
+bool ConsulResolver::nodeBalanced(const kit::ServiceNode &node, const kit::ServiceZone &zone) {
+    return abs(node.workload - zone.workload)/100.0 < this->onlinelab.rateThreshold;
+}
+
+bool ConsulResolver::zoneBalanced(const kit::ServiceZone &localZone, const kit::ServiceZone &crossZone) {
+    // TODO: using onlinelab
+    return abs(localZone.workload - crossZone.workload)/100.0 < this->onlinelab.rateThreshold*2;
 }
 
 std::shared_ptr<ServiceNode> ConsulResolver::SelectedNode() {

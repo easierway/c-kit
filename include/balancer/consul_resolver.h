@@ -79,6 +79,10 @@ class ConsulResolver {
     // clean factor cache
     std::tuple<int, std::string> expireBalanceFactorCache();
 
+    // balanced or not
+    bool nodeBalanced(const ServiceNode&, const ServiceZone&);
+    bool zoneBalanced(const ServiceZone&, const ServiceZone&);
+
     // selection
     std::shared_ptr<ServiceNode> SelectedNode();
 
