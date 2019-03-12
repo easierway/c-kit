@@ -37,19 +37,23 @@ std::tuple<int, std::string> ConsulResolver::updateAll() {
     std::tie(code, err) = this->updateCPUThreshold();
     if (code!=0 && this->logger!=nullptr) {
         LOG4CPLUS_WARN(*(this->logger), "update CPU threshold failed. code: [" << code << "], err: [" << err << "]");
+        return std::make_tuple(code, err);
     }
     std::tie(code, err) = this->updateZoneCPUMap();
     if (code!=0 && this->logger!=nullptr) {
         LOG4CPLUS_WARN(*(this->logger), "update zoneCPUMap failed. code: [" << code << "], err: [" << err << "]");
+        return std::make_tuple(code, err);
     }
     std::tie(code, err) = this->updateOnlinelabFactor();
     if (code!=0 && this->logger!=nullptr) {
         LOG4CPLUS_WARN(*(this->logger), "update onlinelabFactor failed. code: [" << code << "], err: [" << err << "]");
+        return std::make_tuple(code, err);
     }
     std::tie(code, err) = this->updateInstanceFactorMap();
     if (code!=0 && this->logger!=nullptr) {
         LOG4CPLUS_WARN(*(this->logger),
                        "update instanceFactorMap failed. code: [" << code << "], err: [" << err << "]");
+        return std::make_tuple(code, err);
     }
     std::tie(code, err) = this->updateServiceZone();
     if (code!=0 && this->logger!=nullptr) {
@@ -124,8 +128,8 @@ std::tuple<int, std::string> ConsulResolver::updateInstanceFactorMap() {
 
     this->instanceFactorMap = instanceFactorMap;
 
-//    LOG4CPLUS_INFO(*(this->logger),
-//                   "update instanceFactorMap: [" << json11::Json(this->instanceFactorMap).dump() << "]");
+    LOG4CPLUS_DEBUG(*(this->logger),
+                   "update instanceFactorMap: [" << json11::Json(this->instanceFactorMap).dump() << "]");
     return std::make_tuple(0, "");
 }
 
@@ -157,12 +161,30 @@ std::tuple<int, std::string> ConsulResolver::updateOnlinelabFactor() {
     // TODO: return error when not enough parameter provided
     if (!kv["rateThreshold"].is_null()) {
         this->onlinelab.rateThreshold = kv["rateThreshold"].number_value();
+    } else {
+        this->onlinelab.rateThreshold = 0.1;
     }
     if (!kv["learningRate"].is_null()) {
         this->onlinelab.learningRate = kv["learningRate"].number_value();
+    } else {
+        this->onlinelab.learningRate = 0.01;
     }
     if (!kv["crossZoneRate"].is_null()) {
         this->onlinelab.crossZoneRate = kv["crossZoneRate"].number_value();
+    } else {
+        this->onlinelab.crossZoneRate = 0.01;
+    }
+    // balance factor cache expire control, default if null
+    if (!kv["factorCacheExpire"].is_null()) {
+        this->onlinelab.factorCacheExpire = kv["factorCacheExpire"].number_value();
+    } else {
+        this->onlinelab.factorCacheExpire = 300;
+    }
+    // enable cross zone or not, true default
+    if (!kv["crossZone"].is_null()) {
+        this->onlinelab.crossZone = kv["crossZone"].bool_value();
+    } else {
+        this->onlinelab.crossZone = true;
     }
 
     return std::make_tuple(0, "");
@@ -253,7 +275,7 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 candidatePool->factorSum += balanceFactor;
                 balanceFactorCache[node->instanceID] = balanceFactor;
             }
-        } else {
+        } else if (this->onlinelab.crossZone) {
             // cross zone
             for (auto &node: serviceZone->nodes) {
                 candidatePool->nodes.emplace_back(node);
@@ -319,8 +341,7 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
 std::tuple<int, std::string> ConsulResolver::expireBalanceFactorCache() {
     static std::random_device rd;
     static std::mt19937 mt(rd());
-    // TODO: using onlinelab
-    static std::uniform_int_distribution<int> dist(1, 300);
+    static std::uniform_int_distribution<int> dist(1, this->onlinelab.factorCacheExpire);
     if (1==dist(mt)) {
         this->balanceFactorCache.clear();
         LOG4CPLUS_INFO(*(this->logger), "balanceFactorCache expired");
