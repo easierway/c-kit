@@ -289,7 +289,8 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                     balanceFactor = balanceFactorCache[node->instanceID];
                 } else {
                     // cross zone threshold double the node threshold
-                    if (not zoneBalanced(*localZone, *serviceZone) && localZone->workload > serviceZone->workload) {
+                    if (localZone->workload > this->cpuThreshold && not zoneBalanced(*localZone, *serviceZone)
+                        && localZone->workload > serviceZone->workload) {
                         // Too large
                         // balanceFactor = balanceFactor*(localZone->workload - serviceZone->workload)/100.0;
                         balanceFactor = balanceFactor*BALANCEFACTOR_CROSS_RATE;
