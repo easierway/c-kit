@@ -246,7 +246,7 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
     static auto BALANCEFACTOR_MAX_LOCAL = 3000;
     static auto BALANCEFACTOR_MIN_LOCAL = 200;
     static auto BALANCEFACTOR_MAX_CROSS = 1000;
-    static auto BALANCEFACTOR_MIN_CROSS = 10;
+    static auto BALANCEFACTOR_MIN_CROSS = 1;
     static auto BALANCEFACTOR_START_CROSS = 50;
     static auto BALANCEFACTOR_CROSS_RATE = 0.1;
     for (auto &serviceZone : *serviceZones) {
