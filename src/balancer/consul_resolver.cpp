@@ -129,7 +129,7 @@ std::tuple<int, std::string> ConsulResolver::updateInstanceFactorMap() {
     this->instanceFactorMap = instanceFactorMap;
 
     LOG4CPLUS_DEBUG(*(this->logger),
-                   "update instanceFactorMap: [" << json11::Json(this->instanceFactorMap).dump() << "]");
+                    "update instanceFactorMap: [" << json11::Json(this->instanceFactorMap).dump() << "]");
     return std::make_tuple(0, "");
 }
 
@@ -178,7 +178,7 @@ std::tuple<int, std::string> ConsulResolver::updateOnlinelabFactor() {
     if (!kv["factorCacheExpire"].is_null()) {
         this->onlinelab.factorCacheExpire = kv["factorCacheExpire"].number_value();
     } else {
-        this->onlinelab.factorCacheExpire = 300;
+        this->onlinelab.factorCacheExpire = 500;
     }
     // enable cross zone or not, true default
     if (!kv["crossZone"].is_null()) {
@@ -246,7 +246,9 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
     static auto BALANCEFACTOR_MAX_LOCAL = 3000;
     static auto BALANCEFACTOR_MIN_LOCAL = 200;
     static auto BALANCEFACTOR_MAX_CROSS = 1000;
-    static auto BALANCEFACTOR_MIN_CROSS = 50;
+    static auto BALANCEFACTOR_MIN_CROSS = 10;
+    static auto BALANCEFACTOR_START_CROSS = 50;
+    static auto BALANCEFACTOR_CROSS_RATE = 0.1;
     for (auto &serviceZone : *serviceZones) {
         if (localZone->zone==serviceZone->zone) {
             for (auto &node : serviceZone->nodes) {
@@ -288,7 +290,9 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 } else {
                     // cross zone threshold double the node threshold
                     if (not zoneBalanced(*localZone, *serviceZone) && localZone->workload > serviceZone->workload) {
-                        balanceFactor = balanceFactor*(localZone->workload - serviceZone->workload)/100.0;
+                        // Too large
+                        // balanceFactor = balanceFactor*(localZone->workload - serviceZone->workload)/100.0;
+                        balanceFactor = balanceFactor*BALANCEFACTOR_CROSS_RATE;
                     } else {
                         balanceFactor = BALANCEFACTOR_MIN_CROSS;
                     }
@@ -298,6 +302,10 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                     // update cross zone all node factor
                     if (localZone->workload > this->cpuThreshold && not zoneBalanced(*localZone, *serviceZone)
                         && localZone->workload > serviceZone->workload) {
+                        // reset factor to speed cross when start
+                        if (balanceFactor < BALANCEFACTOR_START_CROSS) {
+                            balanceFactor = BALANCEFACTOR_START_CROSS;
+                        }
                         balanceFactor += balanceFactor*this->onlinelab.learningRate;
                     } else {
                         balanceFactor -= balanceFactor*this->onlinelab.learningRate;
