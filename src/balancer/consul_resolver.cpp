@@ -180,6 +180,12 @@ std::tuple<int, std::string> ConsulResolver::updateOnlinelabFactor() {
     } else {
         this->onlinelab.factorCacheExpire = 500;
     }
+    // downshift the factor when new instance starting
+    if (!kv["factorStartRate"].is_null()) {
+        this->onlinelab.factorStartRate = kv["factorStartRate"].number_value();
+    } else {
+        this->onlinelab.factorStartRate = 0.8;
+    }
     // enable cross zone or not, true default
     if (!kv["crossZone"].is_null()) {
         this->onlinelab.crossZone = kv["crossZone"].bool_value();
@@ -249,6 +255,10 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
     static auto BALANCEFACTOR_MIN_CROSS = 1;
     static auto BALANCEFACTOR_START_CROSS = 50;
     static auto BALANCEFACTOR_CROSS_RATE = 0.1;
+
+    // firstly, mark factor is cached or not
+    bool factorCached = not balanceFactorCache.empty();
+
     for (auto &serviceZone : *serviceZones) {
         if (localZone->zone==serviceZone->zone) {
             for (auto &node : serviceZone->nodes) {
@@ -256,9 +266,16 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 candidatePool->weights.emplace_back(0);
 
                 auto balanceFactor = node->balanceFactor;
-                if (balanceFactorCache.count(node->instanceID) > 0) {
-                    balanceFactor = balanceFactorCache[node->instanceID];
+                if (factorCached) {
+                    // use cache when in cache
+                    if (balanceFactorCache.count(node->instanceID) > 0) {
+                        balanceFactor = balanceFactorCache[node->instanceID];
+                    } else {
+                        // downshift the factor for fresh new node
+                        balanceFactor = node->balanceFactor*this->onlinelab.factorStartRate;
+                    }
                 }
+
                 if (this->zoneCPUUpdated && not nodeBalanced(*node, *serviceZone)) {
                     if (node->workload > serviceZone->workload) {
                         balanceFactor -= balanceFactor*this->onlinelab.learningRate;
