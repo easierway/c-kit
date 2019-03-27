@@ -258,6 +258,8 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
 
     // firstly, mark factor is cached or not
     bool factorCached = not balanceFactorCache.empty();
+    // local zone average factor for fresh new node
+    static double localAvgFactor = 0;
 
     for (auto &serviceZone : *serviceZones) {
         if (localZone->zone==serviceZone->zone) {
@@ -265,13 +267,18 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 candidatePool->nodes.emplace_back(node);
                 candidatePool->weights.emplace_back(0);
 
+                // node config factor by default
                 auto balanceFactor = node->balanceFactor;
                 if (factorCached) {
                     // use cache when in cache
                     if (balanceFactorCache.count(node->instanceID) > 0) {
                         balanceFactor = balanceFactorCache[node->instanceID];
+                    } else if (localAvgFactor!=0) {
+                        // downshift the factor for fresh new node by avg
+                        balanceFactor = localAvgFactor;
                     } else {
-                        // downshift the factor for fresh new node
+                        // TODO: remove this logic later
+                        // downshift the factor for fresh new node by rate, default
                         balanceFactor = node->balanceFactor*this->onlinelab.factorStartRate;
                     }
                 }
@@ -293,6 +300,12 @@ std::tuple<int, std::string> ConsulResolver::updateCandidatePool() {
                 candidatePool->factors.emplace_back(balanceFactor);
                 candidatePool->factorSum += balanceFactor;
                 balanceFactorCache[node->instanceID] = balanceFactor;
+            }
+
+            // update local zone avg factor for fresh new node
+            if (not candidatePool->factors.empty()) {
+                localAvgFactor = candidatePool->factorSum/candidatePool->factors.size();
+                LOG4CPLUS_DEBUG(*(this->logger), "localAvgFactor updated: " << localAvgFactor);
             }
         } else if (this->onlinelab.crossZone) {
             // cross zone
