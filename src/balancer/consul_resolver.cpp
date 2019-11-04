@@ -406,6 +406,11 @@ std::shared_ptr<ServiceNode> ConsulResolver::SelectedNode() {
     this->serviceUpdaterMutex.unlock_shared();
     std::lock_guard<std::mutex> lock_guard(this->discoverMutex);
 
+    if (candidatePool->nodes.size() == 0) {
+        LOG4CPLUS_FATAL(*(this->logger), "SelectedNode: have no service nodes");
+        return nullptr;
+    }
+
     int idx = 0;
     double max = 0;
     for (int i = 0; i < candidatePool->factors.size(); i++) {
