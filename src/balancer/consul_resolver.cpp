@@ -432,4 +432,8 @@ std::shared_ptr<ServiceNode> ConsulResolver::SelectedNode() {
     return candidatePool->nodes[idx];
 }
 
+std::string ConsulResolver::getLocalZone() {
+    return this->zone;
+}
+
 }

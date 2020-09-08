@@ -36,6 +36,7 @@ public:
     std::tuple<int, std::string> Start();
     std::tuple<int, std::string> Stop();
     std::shared_ptr<ServiceNode> SelectedNode();
+    std::string getLocalZone();
 };
 
 }

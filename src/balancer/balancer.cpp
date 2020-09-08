@@ -68,4 +68,8 @@ std::shared_ptr<ServiceNode> Balancer::SelectedNode() {
     return this->resolver.SelectedNode();
 }
 
+std::string Balancer::getLocalZone() {
+    return this->resolver.getLocalZone();
+}
+
 }

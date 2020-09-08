@@ -85,6 +85,7 @@ class ConsulResolver {
 
     // selection
     std::shared_ptr<ServiceNode> SelectedNode();
+    std::string getLocalZone();
 
     // logger
     void SetLogger(log4cplus::Logger* logger) {
