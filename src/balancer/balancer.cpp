@@ -2,6 +2,7 @@
 
 #include "balancer/balancer.h"
 #include "util/constant.h"
+#include <time.h>
 
 namespace kit {
 
@@ -29,15 +30,21 @@ std::tuple<int, std::string> Balancer::Start() {
     if (code!=STATUSCODE::SUCCESS) {
         return std::make_tuple(code, err);
     }
+    _lastUpdated = (uint64_t)time(nullptr);
     LOG4CPLUS_INFO(*(this->logger), "update consul metrics finish, resolver" << this->resolver.to_json().dump());
 
     this->serviceUpdater = new std::thread([&]() {
+    	std::string local_err;
+   	int local_code;
         while (!this->done) {
             std::this_thread::sleep_for(std::chrono::seconds(this->intervalS));
             LOG4CPLUS_DEBUG(*(this->logger), "update consul metrics start");
-            this->resolver.updateAll();
+            std::tie(local_code, local_err) = this->resolver.updateAll();
+            if (local_code == STATUSCODE::SUCCESS) {
+                _lastUpdated = (uint64_t)time(nullptr);
+            }
             LOG4CPLUS_INFO(*(this->logger),
-                           "update consul metrics finish, resolver" << this->resolver.to_json().dump());
+                           "update consul metrics finish, code[" << local_code << "], resolver" << this->resolver.to_json().dump());
         }
     });
 
@@ -70,6 +77,10 @@ std::shared_ptr<ServiceNode> Balancer::SelectedNode() {
 
 std::string Balancer::getLocalZone() {
     return this->resolver.getLocalZone();
+}
+
+uint64_t Balancer::getLastUpdated() {
+    return this->_lastUpdated;
 }
 
 }

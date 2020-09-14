@@ -13,6 +13,7 @@ class Balancer {
     bool done;
     std::thread *serviceUpdater;
     log4cplus::Logger *logger;
+    volatile uint64_t _lastUpdated = 0;
 
 public:
     Balancer(const std::string &address,
@@ -37,6 +38,7 @@ public:
     std::tuple<int, std::string> Stop();
     std::shared_ptr<ServiceNode> SelectedNode();
     std::string getLocalZone();
+    uint64_t getLastUpdated();
 };
 
 }
