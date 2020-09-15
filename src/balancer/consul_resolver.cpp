@@ -209,7 +209,8 @@ std::tuple<int, std::string> ConsulResolver::updateServiceZone() {
     for (auto &node : nodes) {
         if (this->instanceFactorMap.count(node->instanceID)==0) {
             // TODO: default 100?
-            node->workload = 50;
+            // set 70 to protect new rs until got its cpu load
+            node->workload = 70;
         } else {
             // TODO: enlarge the map content
             node->workload = this->instanceFactorMap[node->instanceID];
