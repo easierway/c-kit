@@ -22,6 +22,7 @@ TEST(testBalancer, caseService) {
 
     auto balancer = std::make_shared<Balancer>(
         "http://sg-consul.mobvista.com:8500",
+        "unknown",
         "rs",
         "clb/rs/cpu_threshold.json",
         "clb/rs/zone_cpu.json",

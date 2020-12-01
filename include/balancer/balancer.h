@@ -17,6 +17,7 @@ class Balancer {
 
 public:
     Balancer(const std::string &address,
+             const std::string &zone,
              const std::string &service,
              const std::string &cpuThresholdKey = "clb/rs/cpu_threshold.json",
              const std::string &zoneCPUKey = "clb/rs/zone_cpu.json",

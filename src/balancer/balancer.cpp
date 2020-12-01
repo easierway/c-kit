@@ -8,6 +8,7 @@ namespace kit {
 
 Balancer::Balancer(
     const std::string &address,
+    const std::string &zone,
     const std::string &service,
     const std::string &cpuThresholdKey,
     const std::string &zoneCPUKey,
@@ -15,7 +16,7 @@ Balancer::Balancer(
     const std::string &onlinelabFactorKey,
     int timeoutS,
     int intervalS
-) : resolver(address, service, cpuThresholdKey, zoneCPUKey, instanceFactorKey, onlinelabFactorKey, timeoutS),
+) : resolver(address, zone, service, cpuThresholdKey, zoneCPUKey, instanceFactorKey, onlinelabFactorKey, timeoutS),
     intervalS(intervalS) {
     this->done = false;
     this->serviceUpdater = nullptr;
