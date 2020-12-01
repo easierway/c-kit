@@ -22,6 +22,7 @@ TEST(testResolver, caseUpdate) {
     log4cplus::Logger logger = log4cplus::Logger::getInstance("test");
     auto resolver = std::make_shared<ConsulResolver>(
         "http://sg-consul.mobvista.com:8500",
+        "unknown",
         "rs",
         "clb/rs/cpu_threshold.json",
         "clb/rs/zone_cpu.json",
@@ -86,6 +87,7 @@ TEST(testResolver, caseUpdateAll) {
     log4cplus::Logger logger = log4cplus::Logger::getInstance("test");
     auto resolver = std::make_shared<ConsulResolver>(
         "http://sg-consul.mobvista.com:8500",
+        "unknown",
         "rs",
         "clb/rs/cpu_threshold.json",
         "clb/rs/zone_cpu.json",

@@ -11,6 +11,7 @@ namespace kit {
 
 ConsulResolver::ConsulResolver(
     const std::string &address,
+    const std::string &zone,
     const std::string &service,
     const std::string &cpuThresholdKey,
     const std::string &zoneCPUKey,
@@ -26,7 +27,11 @@ ConsulResolver::ConsulResolver(
     this->timeoutS = timeoutS;
     this->cpuThreshold = 0;
     this->lastIndex = "0";
-    this->zone = Zone();
+    if (zone != "") {
+        this->zone = zone;
+    } else {
+        this->zone = Zone();
+    }
     this->metric = std::make_shared<ResolverMetric>();
     this->logger = nullptr;
 }
