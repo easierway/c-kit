@@ -50,6 +50,7 @@ class ConsulResolver {
     ConsulResolver(
         const std::string& address,
         const std::string& service,
+        const std::string& zone,
         const std::string& cpuThresholdKey    = "clb/rs/cpu_threshold.json",
         const std::string& zoneCPUKey         = "clb/rs/zone_cpu.json",
         const std::string& instanceFactorKey  = "clb/rs/instance_factor.json",
