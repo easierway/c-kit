@@ -11,6 +11,7 @@ int main(int argc, char** argv) {
 
     auto balancer = std::make_shared<kit::Balancer>(
         "http://fk-consul.mobvista.com:8500",
+        "unknown",
         "rs",
         "clb/rs/cpu_threshold.json",
         "clb/rs/zone_cpu.json",
