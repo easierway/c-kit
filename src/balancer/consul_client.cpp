@@ -19,7 +19,7 @@ std::tuple<int,
     std::string err;
     std::map<std::string, std::string> header;
     std::stringstream ss;
-    ss << this->address << "/v1/health/service/" << serviceName << "?passing=true&wait=" << timeoutS << "s";
+    ss << this->address << "/v1/health/service/" << serviceName << "?passing=true&wait=" << timeoutS << "s&stale=";
     std::tie(status, body, header, err) = HttpGet(ss.str(), std::map<std::string, std::string>{});
     if (status!=200) {
         return std::make_tuple(-1, nodes, "HttpGet failed. err [" + err + "]");
@@ -79,7 +79,7 @@ std::tuple<int, json11::Json, std::string> ConsulClient::GetKV(const std::string
     std::string err;
     std::map<std::string, std::string> header;
     std::stringstream ss;
-    ss << this->address << "/v1/kv/" << path << "?raw=true&wait=" << timeoutS << "s";
+    ss << this->address << "/v1/kv/" << path << "?raw=true&wait=" << timeoutS << "s&stale=";
     std::tie(status, body, header, err) = HttpGet(ss.str(), std::map<std::string, std::string>{});
     if (status!=200) {
         return std::make_tuple(-1, json11::Json(), "HttpGet failed. err [" + err + "]");
