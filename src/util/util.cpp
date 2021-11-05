@@ -92,6 +92,9 @@ std::tuple<int, std::string, std::string> HttpGet(const std::string &url) {
     std::stringstream body;
     long              status;
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteToStream);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &body);
     auto code = curl_easy_perform(curl);
@@ -129,6 +132,9 @@ std::tuple<int, std::string, std::map<std::string, std::string>, std::string> Ht
 
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, reqheaderStr);
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, WriteToStream);
     curl_easy_setopt(curl, CURLOPT_HEADERDATA, &resheaderStr);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteToStream);
